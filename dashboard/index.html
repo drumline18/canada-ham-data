@@ -17,7 +17,7 @@
     </header>
 
     <main class="container">
-      <section class="kpi-grid" id="kpi-grid">
+      <section class="kpi-grid kpi-grid--main" id="kpi-grid">
         <article class="kpi-card">
           <h2>Total Records</h2>
           <p id="kpi-total-records">-</p>
@@ -34,6 +34,8 @@
           <h2>Top Qualification</h2>
           <p id="kpi-top-qual">-</p>
         </article>
+      </section>
+      <section class="kpi-grid kpi-grid--changes">
         <article class="kpi-card kpi-card--new">
           <h2>New Since Last Run</h2>
           <p id="kpi-new-callsigns">-</p>
@@ -58,9 +60,11 @@
           <canvas id="qual-chart" height="180"></canvas>
           <div class="qual-legend" id="qual-legend"></div>
         </article>
-        <article class="panel">
+        <article class="panel panel--full">
           <h2>Basic/Honours vs Advanced</h2>
-          <canvas id="level-chart" height="180"></canvas>
+          <div class="chart-doughnut-wrap">
+            <canvas id="level-chart"></canvas>
+          </div>
         </article>
       </section>
 

@@ -44,9 +44,33 @@ main {
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.9rem;
   margin: 1rem 0;
+}
+
+.kpi-grid > * {
+  min-width: 0;
+}
+
+.kpi-grid--main {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.kpi-grid--changes {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .kpi-grid--main {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 540px) {
+  .kpi-grid--main {
+    grid-template-columns: 1fr;
+  }
 }
 
 .kpi-card,
@@ -78,8 +102,27 @@ main > .panel + .panel {
 .chart-grid {
   display: grid;
   gap: 0.9rem;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   margin-bottom: 0.9rem;
+}
+
+.chart-grid > * {
+  min-width: 0;
+}
+
+.panel--full {
+  grid-column: 1 / -1;
+}
+
+.chart-doughnut-wrap {
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+@media (max-width: 700px) {
+  .chart-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .panel h2 {
@@ -147,6 +190,15 @@ code {
 
 .error {
   border-color: #b24e4e;
+}
+
+.panel--status p {
+  margin: 0.4rem 0 0;
+}
+
+.status-meta {
+  color: var(--muted);
+  font-size: 0.92rem;
 }
 
 .pagination {

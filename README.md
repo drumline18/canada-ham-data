@@ -78,16 +78,25 @@ Click **Deploy** (or push a commit). Railway will:
 3. On first boot, detect that the output is missing and immediately run the full download + analysis pipeline in a background thread.
 4. Start the APScheduler cron job that repeats the pipeline daily at **03:00 UTC**.
 
-The `/status` endpoint (used as the Railway health check) returns JSON with the last run timestamp and row count:
+Railway uses `/status` as the health check. The endpoint stays available during the first bootstrap run and includes explicit readiness fields so the dashboard can wait for data instead of failing on missing files.
+
+Example `/status` response after a successful run:
 
 ```json
 {
-  "updated_at": "2026-04-08T03:00:01Z",
+  "updated_at": "2026-04-08T03:00:01+00:00",
   "row_count": 91500,
   "source_url": "https://apc-cap.ic.gc.ca/datafiles/amateur_delim.zip",
-  "output_dir": "/data/output"
+  "output_dir": "/data/output",
+  "ready": true,
+  "analysis_running": false,
+  "last_started_at": "2026-04-08T03:00:00+00:00",
+  "last_completed_at": "2026-04-08T03:00:01+00:00",
+  "last_error": null
 }
 ```
+
+During the first deploy, `ready` will be `false` until the core dashboard CSV files have been generated. The web UI shows a "Preparing dashboard data" panel and polls `/status` until those core files are ready. Historical JSON files such as `snapshot_history.json` and `recent_changes.json` are treated as optional by the UI.
 
 ---
 
@@ -115,7 +124,7 @@ OUTPUT_DIR=output DB_PATH=output/ham.db python server.py
 
 Open [http://localhost:8080](http://localhost:8080).
 
-The server skips the startup download if `output/last_updated.json` exists and is less than 25 hours old.
+The server skips the startup download if `output/last_updated.json` exists and is less than 25 hours old. If the output is missing, the UI will stay on a waiting state until the first analysis run finishes.
 
 ### Run analysis only (no download, uses local file)
 

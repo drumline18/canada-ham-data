@@ -36,6 +36,13 @@ OUTPUT_DIR = Path(os.environ.get("OUTPUT_DIR", "output"))
 DB_PATH = Path(os.environ.get("DB_PATH", str(Path(os.environ.get("OUTPUT_DIR", "output")).parent / "ham.db")))
 PORT = int(os.environ.get("PORT", 8080))
 STALE_HOURS = 25  # re-run if last update is older than this
+READY_OUTPUT_FILES = (
+    "province_summary.csv",
+    "qualification_combo_summary.csv",
+    "data_quality_summary.csv",
+    "city_summary.csv",
+    "top_clubs.csv",
+)
 
 BASE_DIR = Path(__file__).parent
 DASHBOARD_DIR = BASE_DIR / "dashboard"
@@ -76,7 +83,13 @@ def status():
         data = json.loads(last_updated_path.read_text(encoding="utf-8"))
     else:
         data = {"updated_at": None, "row_count": None, "source_url": None}
+    state = _get_analysis_state()
     data["output_dir"] = str(OUTPUT_DIR)
+    data["ready"] = _is_output_ready()
+    data["analysis_running"] = state["running"]
+    data["last_started_at"] = state["last_started_at"]
+    data["last_completed_at"] = state["last_completed_at"]
+    data["last_error"] = state["last_error"]
     return jsonify(data)
 
 
@@ -85,6 +98,27 @@ def status():
 # ---------------------------------------------------------------------------
 
 _analysis_lock = threading.Lock()
+_analysis_state_lock = threading.Lock()
+_analysis_state = {
+    "running": False,
+    "last_started_at": None,
+    "last_completed_at": None,
+    "last_error": None,
+}
+
+
+def _set_analysis_state(**changes: object) -> None:
+    with _analysis_state_lock:
+        _analysis_state.update(changes)
+
+
+def _get_analysis_state() -> dict:
+    with _analysis_state_lock:
+        return dict(_analysis_state)
+
+
+def _is_output_ready() -> bool:
+    return all((OUTPUT_DIR / filename).exists() for filename in READY_OUTPUT_FILES)
 
 
 def _run_analysis_safe() -> None:
@@ -92,15 +126,27 @@ def _run_analysis_safe() -> None:
     if not _analysis_lock.acquire(blocking=False):
         log.info("Analysis already running, skipping.")
         return
+    started_at = datetime.now(timezone.utc).isoformat()
+    _set_analysis_state(running=True, last_started_at=started_at, last_error=None)
     try:
-        log.info("Starting analysis …")
+        log.info("Starting analysis...")
         run_analysis.download_and_analyze(
             data_url=run_analysis.DATA_URL,
             output_dir=OUTPUT_DIR,
             db_path=DB_PATH,
         )
+        _set_analysis_state(
+            running=False,
+            last_completed_at=datetime.now(timezone.utc).isoformat(),
+            last_error=None,
+        )
         log.info("Analysis complete.")
-    except Exception:
+    except Exception as exc:
+        _set_analysis_state(
+            running=False,
+            last_completed_at=datetime.now(timezone.utc).isoformat(),
+            last_error=str(exc),
+        )
         log.exception("Analysis failed.")
     finally:
         _analysis_lock.release()
@@ -127,7 +173,7 @@ def _start_scheduler() -> None:
     scheduler = BackgroundScheduler(timezone="UTC")
     scheduler.add_job(_run_analysis_safe, "cron", hour=3, minute=0)
     scheduler.start()
-    log.info("Scheduler started — analysis will run daily at 03:00 UTC.")
+    log.info("Scheduler started - analysis will run daily at 03:00 UTC.")
 
 
 # ---------------------------------------------------------------------------
@@ -138,7 +184,7 @@ if __name__ == "__main__":
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     if _is_output_stale():
-        log.info("Output is missing or stale — running analysis before serving.")
+        log.info("Output is missing or stale - starting background analysis.")
         thread = threading.Thread(target=_run_analysis_safe, daemon=True)
         thread.start()
     else:
@@ -146,5 +192,5 @@ if __name__ == "__main__":
 
     _start_scheduler()
 
-    log.info("Starting Flask on port %d …", PORT)
+    log.info("Starting Flask on port %d...", PORT)
     app.run(host="0.0.0.0", port=PORT)

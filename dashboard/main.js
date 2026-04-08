@@ -2,6 +2,7 @@ const DATA_DIR = "/output";
 const cityState = { page: 1, pageSize: 25, filterText: "", rows: [] };
 const clubsState = { page: 1, pageSize: 25, rows: [] };
 const changesState = { page: 1, pageSize: 25, activeTab: "new", data: {} };
+const STATUS_POLL_MS = 5000;
 const QUAL_LABELS = {
   A: "Basic",
   B: "Morse (5 wpm)",
@@ -98,6 +99,54 @@ function num(value) {
 
 function fmt(n) {
   return new Intl.NumberFormat("en-CA").format(n);
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (ch) => {
+    const entities = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
+    return entities[ch] || ch;
+  });
+}
+
+function ensureStatusPanel() {
+  let panel = document.querySelector("#status-panel");
+  if (panel) return panel;
+
+  panel = document.createElement("section");
+  panel.id = "status-panel";
+  panel.className = "panel panel--status";
+  document.querySelector("main.container").prepend(panel);
+  return panel;
+}
+
+function clearStatusPanel() {
+  const panel = document.querySelector("#status-panel");
+  if (panel) panel.remove();
+}
+
+function renderBootstrapState(status) {
+  const panel = ensureStatusPanel();
+  const startedAt = status.last_started_at
+    ? status.last_started_at.replace("T", " ").replace("+00:00", " UTC")
+    : null;
+
+  panel.classList.toggle("error", Boolean(status.last_error));
+  panel.innerHTML = `
+    <h2>Preparing dashboard data</h2>
+    <p>${
+      status.analysis_running
+        ? "Initial analysis is running in the background. A fresh Railway deploy can take a minute or two before the CSV and JSON outputs are ready."
+        : "The web service is up, but the generated dashboard files are not ready yet."
+    }</p>
+    ${startedAt ? `<p class="status-meta">Last analysis start: ${escapeHtml(startedAt)}</p>` : ""}
+    ${status.last_error ? `<p class="status-meta">Last error: ${escapeHtml(status.last_error)}</p>` : ""}
+  `;
 }
 
 function fillKpis(provinceRows, qualRows) {
@@ -398,11 +447,9 @@ function initChangesPanel(changes) {
 }
 
 function showError(message) {
-  const container = document.querySelector("main.container");
-  const panel = document.createElement("section");
-  panel.className = "panel error";
-  panel.innerHTML = `<h2>Failed to load dashboard data</h2><p>${message}</p>`;
-  container.prepend(panel);
+  const panel = ensureStatusPanel();
+  panel.className = "panel panel--status error";
+  panel.innerHTML = `<h2>Failed to load dashboard data</h2><p>${escapeHtml(message)}</p>`;
 }
 
 async function loadJson(path) {
@@ -411,8 +458,27 @@ async function loadJson(path) {
   return response.json();
 }
 
+async function waitForDashboardData() {
+  while (true) {
+    const status = await loadJson("/status");
+    if (status.ready) {
+      clearStatusPanel();
+      return status;
+    }
+
+    renderBootstrapState(status);
+    if (status.last_error && !status.analysis_running) {
+      throw new Error(`Initial analysis failed: ${status.last_error}`);
+    }
+
+    await new Promise((resolve) => window.setTimeout(resolve, STATUS_POLL_MS));
+  }
+}
+
 async function boot() {
   try {
+    await waitForDashboardData();
+
     const [
       provinceRows,
       qualRows,

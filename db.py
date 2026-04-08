@@ -237,7 +237,7 @@ def _write_recent_changes(conn: sqlite3.Connection, output_dir: Path) -> None:
     cur = conn.execute(
         """SELECT callsign, change_type, old_quals, new_quals, prov_cd, detected_at
            FROM changes
-           WHERE detected_at >= datetime('now', ?)
+           WHERE datetime(detected_at) >= datetime('now', ?)
            ORDER BY detected_at DESC""",
         (f"-{RECENT_DAYS} days",),
     )

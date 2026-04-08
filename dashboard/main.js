@@ -149,8 +149,11 @@ function renderBootstrapState(status) {
   `;
 }
 
-function fillKpis(provinceRows, qualRows) {
-  const totalRecords = provinceRows.reduce((sum, r) => sum + num(r.records), 0);
+function fillKpis(provinceRows, qualRows, canonicalRowCount) {
+  const summedProvinces = provinceRows.reduce((sum, r) => sum + num(r.records), 0);
+  const n = canonicalRowCount != null ? Number(canonicalRowCount) : NaN;
+  const totalRecords =
+    Number.isFinite(n) && n > 0 ? Math.trunc(n) : summedProvinces;
   const provinceCount = provinceRows.length;
   const topProvince = provinceRows[0] || {};
   const topQual = qualRows[0] || {};
@@ -477,7 +480,7 @@ async function waitForDashboardData() {
 
 async function boot() {
   try {
-    await waitForDashboardData();
+    const status = await waitForDashboardData();
 
     const [
       provinceRows,
@@ -497,7 +500,7 @@ async function boot() {
       loadJson(`${DATA_DIR}/recent_changes.json`).catch(() => ({})),
     ]);
 
-    fillKpis(provinceRows, qualRows);
+    fillKpis(provinceRows, qualRows, status.row_count);
     fillChangeKpis(recentChanges);
     renderTrendChart(snapshotHistory);
     renderProvinceChart(provinceRows);

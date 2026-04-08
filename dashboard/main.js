@@ -22,6 +22,15 @@ const QUAL_MIX_COLORS = [
   "#94A3B8",
 ];
 
+function qualLetterKeyHtml() {
+  return Object.entries(QUAL_LABELS)
+    .map(
+      ([letter, text]) =>
+        `<span class="qual-legend__letter-pair"><strong>${letter}</strong> ${escapeHtml(text)}</span>`,
+    )
+    .join("");
+}
+
 function describeQualificationCombo(combo) {
   if (!combo || combo === "(none)") return "No listed qualification";
   if (combo === "OTHER") return "Other qualification combinations";
@@ -263,12 +272,9 @@ function renderQualMixLegend(labels, colors) {
     </div>`,
     )
     .join("");
-  const letters = Object.entries(QUAL_LABELS)
-    .map(([letter, text]) => `<span class="qual-legend__letter-pair"><strong>${letter}</strong> ${escapeHtml(text)}</span>`)
-    .join("");
   legend.innerHTML = `
     <div class="qual-legend__segments">${segments}</div>
-    <div class="qual-legend__letters" aria-label="Qualification letter key">${letters}</div>
+    <div class="qual-legend__letters" aria-label="Qualification letter key">${qualLetterKeyHtml()}</div>
   `;
 }
 
@@ -371,6 +377,62 @@ function renderQualityTable(rows) {
     `
     )
     .join("");
+}
+
+const CLUB_SUMMARY_LABELS = {
+  total_records: "Total records (source rows)",
+  records_with_club_name: "Records listing a club name",
+  club_record_share_pct: "Share of records with a club name",
+  distinct_club_names: "Distinct club names",
+  distinct_fsa: "Distinct postal FSAs (first 3 characters)",
+};
+
+function clubSummaryMetricLabel(metric) {
+  return CLUB_SUMMARY_LABELS[metric] || metric.replace(/_/g, " ");
+}
+
+function renderClubSummaryTable(rows) {
+  const body = document.querySelector("#club-summary-body");
+  body.innerHTML = rows
+    .map((r) => {
+      const metric = r.metric || "";
+      const label = clubSummaryMetricLabel(metric);
+      const raw = num(r.value);
+      let display;
+      if (metric === "club_record_share_pct") {
+        display = `${raw.toFixed(3)}%`;
+      } else {
+        display = fmt(Math.round(raw));
+      }
+      return `<tr>
+        <td>${escapeHtml(label)}</td>
+        <td class="num">${display}</td>
+      </tr>`;
+    })
+    .join("");
+}
+
+function renderQualByProvinceTable(rows) {
+  const letters = ["A", "B", "C", "D", "E"];
+  const body = document.querySelector("#qual-by-prov-body");
+  body.innerHTML = rows
+    .map((r) => {
+      const qualCells = letters
+        .map((L) => {
+          const c = num(r[`qual_${L}_count`]);
+          const p = num(r[`qual_${L}_pct`]);
+          return `<td class="num">${fmt(c)}<span class="pct"> (${p.toFixed(1)}%)</span></td>`;
+        })
+        .join("");
+      return `<tr>
+        <td>${escapeHtml(r.province || "")}</td>
+        <td class="num">${fmt(num(r.records))}</td>
+        ${qualCells}
+      </tr>`;
+    })
+    .join("");
+  const keyEl = document.querySelector("#qual-by-prov-letters");
+  if (keyEl) keyEl.innerHTML = qualLetterKeyHtml();
 }
 
 function renderCityTable() {
@@ -566,17 +628,21 @@ async function boot() {
     const [
       provinceRows,
       qualRows,
+      qualByProvRows,
       qualityRows,
       cityRows,
       clubsRows,
+      clubSummaryRows,
       snapshotHistory,
       recentChanges,
     ] = await Promise.all([
       loadCsv(`${DATA_DIR}/province_summary.csv`),
       loadCsv(`${DATA_DIR}/qualification_combo_summary.csv`),
+      loadCsv(`${DATA_DIR}/qualification_by_province.csv`),
       loadCsv(`${DATA_DIR}/data_quality_summary.csv`),
       loadCsv(`${DATA_DIR}/city_summary.csv`),
       loadCsv(`${DATA_DIR}/top_clubs.csv`),
+      loadCsv(`${DATA_DIR}/club_summary.csv`),
       loadJson(`${DATA_DIR}/snapshot_history.json`).catch(() => []),
       loadJson(`${DATA_DIR}/recent_changes.json`).catch(() => ({})),
     ]);
@@ -589,10 +655,12 @@ async function boot() {
     renderLevelSplitChart(qualRows);
     initChangesPanel(recentChanges);
     renderQualityTable(qualityRows);
+    renderQualByProvinceTable(qualByProvRows);
     cityState.rows = cityRows;
     clubsState.rows = clubsRows;
     renderCityTable();
     renderClubTable();
+    renderClubSummaryTable(clubSummaryRows);
 
     const cityFilter = document.querySelector("#city-filter");
     cityFilter.addEventListener("input", () => {

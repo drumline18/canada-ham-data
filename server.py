@@ -39,9 +39,11 @@ STALE_HOURS = 25  # re-run if last update is older than this
 READY_OUTPUT_FILES = (
     "province_summary.csv",
     "qualification_combo_summary.csv",
+    "qualification_by_province.csv",
     "data_quality_summary.csv",
     "city_summary.csv",
     "top_clubs.csv",
+    "club_summary.csv",
 )
 
 BASE_DIR = Path(__file__).parent

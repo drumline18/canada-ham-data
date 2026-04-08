@@ -119,6 +119,34 @@
       </section>
 
       <section class="panel">
+        <h2>Qualification by province</h2>
+        <p class="subtitle-inline panel-lead">
+          Per-province counts for each qualification letter (A–E). Percentages are within the province.
+        </p>
+        <div class="table-wrap">
+          <table class="table--dense">
+            <thead>
+              <tr>
+                <th>Province</th>
+                <th class="th-num">Records</th>
+                <th class="th-num">A</th>
+                <th class="th-num">B</th>
+                <th class="th-num">C</th>
+                <th class="th-num">D</th>
+                <th class="th-num">E</th>
+              </tr>
+            </thead>
+            <tbody id="qual-by-prov-body"></tbody>
+          </table>
+        </div>
+        <div
+          class="qual-legend__letters qual-by-prov-key"
+          id="qual-by-prov-letters"
+          aria-label="Qualification letter key"
+        ></div>
+      </section>
+
+      <section class="panel">
         <h2>Top Cities (from summary)</h2>
         <div class="controls">
           <label for="city-filter">Filter city/province:</label>
@@ -178,6 +206,24 @@
           <button id="clubs-prev" type="button">Prev</button>
           <span id="clubs-page-label">Page 1 of 1</span>
           <button id="clubs-next" type="button">Next</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Clubs &amp; postal coverage</h2>
+        <p class="subtitle-inline panel-lead">
+          Aggregates from club name and postal-code fields in the source data.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th class="th-num">Value</th>
+              </tr>
+            </thead>
+            <tbody id="club-summary-body"></tbody>
+          </table>
         </div>
       </section>
     </main>

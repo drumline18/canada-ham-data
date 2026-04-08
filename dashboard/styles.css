@@ -314,6 +314,30 @@ code {
   color: var(--muted);
 }
 
+.panel-lead {
+  margin: 0 0 0.75rem;
+  max-width: 52rem;
+  line-height: 1.45;
+}
+
+.table--dense th,
+.table--dense td {
+  font-size: 0.88rem;
+  padding: 0.42rem 0.35rem;
+}
+
+.th-num,
+td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.table--dense .pct {
+  color: var(--muted);
+  font-size: 0.82em;
+  white-space: nowrap;
+}
+
 .tab-bar {
   display: flex;
   gap: 0.4rem;

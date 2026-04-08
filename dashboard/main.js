@@ -1,4 +1,4 @@
-const DATA_DIR = "../output";
+const DATA_DIR = "/output";
 const cityState = { page: 1, pageSize: 25, filterText: "", rows: [] };
 const clubsState = { page: 1, pageSize: 25, rows: [] };
 const QUAL_LABELS = {

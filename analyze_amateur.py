@@ -217,23 +217,8 @@ def build_summaries(rows: List[Dict[str, str]]) -> Dict[str, List[Dict[str, obje
     }
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Analyze amateur_delim.txt and produce summary CSV files.")
-    parser.add_argument(
-        "--input",
-        default="amateur_delim.txt",
-        help="Input semicolon-delimited file path (default: amateur_delim.txt)",
-    )
-    parser.add_argument(
-        "--output-dir",
-        default="output",
-        help="Output directory for summary CSVs (default: output)",
-    )
-    args = parser.parse_args()
-
-    input_path = Path(args.input)
-    output_dir = Path(args.output_dir)
-
+def run(input_path: Path, output_dir: Path) -> int:
+    """Analyze *input_path* and write CSVs to *output_dir*. Returns row count."""
     if not input_path.exists():
         raise FileNotFoundError(f"Input file not found: {input_path}")
 
@@ -250,6 +235,23 @@ def main() -> None:
 
     print(f"Analyzed {len(rows)} rows from {input_path}")
     print(f"Wrote {len(summaries)} summary files to {output_dir.resolve()}")
+    return len(rows)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Analyze amateur_delim.txt and produce summary CSV files.")
+    parser.add_argument(
+        "--input",
+        default="amateur_delim.txt",
+        help="Input semicolon-delimited file path (default: amateur_delim.txt)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="output",
+        help="Output directory for summary CSVs (default: output)",
+    )
+    args = parser.parse_args()
+    run(Path(args.input), Path(args.output_dir))
 
 
 if __name__ == "__main__":

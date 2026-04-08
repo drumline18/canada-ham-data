@@ -24,3 +24,4 @@ Thumbs.db
 # Project data artifacts
 output/
 amateur_delim.txt
+*.zip

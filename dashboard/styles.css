@@ -164,3 +164,57 @@ code {
   color: var(--muted);
   font-size: 0.9rem;
 }
+
+.kpi-card--new {
+  border-color: #2a6e3a;
+}
+
+.kpi-card--new p {
+  color: #4caf72;
+}
+
+.kpi-card--removed {
+  border-color: #6e2a2a;
+}
+
+.kpi-card--removed p {
+  color: #e05555;
+}
+
+.kpi-card--upgrade {
+  border-color: #2a4a6e;
+}
+
+.kpi-card--upgrade p {
+  color: #63a4ff;
+}
+
+.subtitle-inline {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.tab-bar {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  background: #0f1a30;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 0.35rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab-btn--active,
+.tab-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}

@@ -33,6 +33,7 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 OUTPUT_DIR = Path(os.environ.get("OUTPUT_DIR", "output"))
+DB_PATH = Path(os.environ.get("DB_PATH", str(Path(os.environ.get("OUTPUT_DIR", "output")).parent / "ham.db")))
 PORT = int(os.environ.get("PORT", 8080))
 STALE_HOURS = 25  # re-run if last update is older than this
 
@@ -96,6 +97,7 @@ def _run_analysis_safe() -> None:
         run_analysis.download_and_analyze(
             data_url=run_analysis.DATA_URL,
             output_dir=OUTPUT_DIR,
+            db_path=DB_PATH,
         )
         log.info("Analysis complete.")
     except Exception:

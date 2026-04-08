@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
 Download the ISED amateur radio ZIP, extract the delimited file,
-run the analysis, and write a last_updated.json timestamp.
+run the analysis, update the SQLite change-tracking DB, and write
+a last_updated.json timestamp.
 
 Usage:
     python run_analysis.py
-    DATA_URL=https://... OUTPUT_DIR=/data/output python run_analysis.py
+    DATA_URL=https://... OUTPUT_DIR=/data/output DB_PATH=/data/ham.db python run_analysis.py
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ from pathlib import Path
 import requests
 
 import analyze_amateur
+import db as db_module
 
 DATA_URL = os.environ.get(
     "DATA_URL",
@@ -30,8 +32,18 @@ OUTPUT_DIR = Path(os.environ.get("OUTPUT_DIR", "output"))
 
 _EXTRACTED_NAME = "amateur_delim.txt"
 
+def _default_db_path(output_dir: Path) -> Path:
+    return Path(os.environ.get("DB_PATH", str(output_dir.parent / "ham.db")))
 
-def download_and_analyze(data_url: str = DATA_URL, output_dir: Path = OUTPUT_DIR) -> None:
+
+def download_and_analyze(
+    data_url: str = DATA_URL,
+    output_dir: Path = OUTPUT_DIR,
+    db_path: Path | None = None,
+) -> None:
+    if db_path is None:
+        db_path = _default_db_path(output_dir)
+
     print(f"[run_analysis] Downloading {data_url} …")
     response = requests.get(data_url, timeout=120, stream=True)
     response.raise_for_status()
@@ -56,9 +68,17 @@ def download_and_analyze(data_url: str = DATA_URL, output_dir: Path = OUTPUT_DIR
             txt_path = Path(tmp) / txt_member
             print(f"[run_analysis] Extracted {txt_member}")
 
-        row_count = analyze_amateur.run(txt_path, output_dir)
+        row_count, new_rows = analyze_amateur.run(txt_path, output_dir)
 
+    # --- DB: diff and persist changes ---
     timestamp = datetime.now(timezone.utc).isoformat()
+    conn = db_module.init_db(db_path)
+    old_records = db_module.get_current_records(conn)
+    snapshot_id = db_module.insert_snapshot(conn, timestamp, row_count, data_url)
+    db_module.apply_diff(conn, snapshot_id, old_records, new_rows)
+    db_module.write_output_files(conn, output_dir)
+    conn.close()
+
     last_updated = {
         "updated_at": timestamp,
         "row_count": row_count,

@@ -34,6 +34,18 @@
           <h2>Top Qualification</h2>
           <p id="kpi-top-qual">-</p>
         </article>
+        <article class="kpi-card kpi-card--new">
+          <h2>New Since Last Run</h2>
+          <p id="kpi-new-callsigns">-</p>
+        </article>
+        <article class="kpi-card kpi-card--removed">
+          <h2>Removed Since Last Run</h2>
+          <p id="kpi-removed-callsigns">-</p>
+        </article>
+        <article class="kpi-card kpi-card--upgrade">
+          <h2>Qual Upgrades Since Last Run</h2>
+          <p id="kpi-upgrades">-</p>
+        </article>
       </section>
 
       <section class="chart-grid">
@@ -50,6 +62,38 @@
           <h2>Basic/Honours vs Advanced</h2>
           <canvas id="level-chart" height="180"></canvas>
         </article>
+      </section>
+
+      <section class="panel">
+        <h2>Licensee Count Over Time</h2>
+        <canvas id="trend-chart" height="100"></canvas>
+      </section>
+
+      <section class="panel">
+        <h2>Recent Changes <span class="subtitle-inline" id="changes-date-range"></span></h2>
+        <div class="tab-bar" id="changes-tabs">
+          <button class="tab-btn tab-btn--active" data-tab="new">New</button>
+          <button class="tab-btn" data-tab="removed">Removed</button>
+          <button class="tab-btn" data-tab="qual_upgrade">Upgrades</button>
+          <button class="tab-btn" data-tab="qual_downgrade">Downgrades</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead id="changes-thead">
+              <tr>
+                <th>Callsign</th>
+                <th>Province</th>
+                <th>Detected</th>
+              </tr>
+            </thead>
+            <tbody id="changes-body"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <button id="changes-prev" type="button">Prev</button>
+          <span id="changes-page-label">Page 1 of 1</span>
+          <button id="changes-next" type="button">Next</button>
+        </div>
       </section>
 
       <section class="panel">

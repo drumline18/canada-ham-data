@@ -217,8 +217,11 @@ def build_summaries(rows: List[Dict[str, str]]) -> Dict[str, List[Dict[str, obje
     }
 
 
-def run(input_path: Path, output_dir: Path) -> int:
-    """Analyze *input_path* and write CSVs to *output_dir*. Returns row count."""
+def run(input_path: Path, output_dir: Path) -> tuple[int, List[Dict[str, str]]]:
+    """Analyze *input_path* and write CSVs to *output_dir*.
+
+    Returns (row_count, rows) so callers can pass the raw rows to the DB layer.
+    """
     if not input_path.exists():
         raise FileNotFoundError(f"Input file not found: {input_path}")
 
@@ -235,7 +238,7 @@ def run(input_path: Path, output_dir: Path) -> int:
 
     print(f"Analyzed {len(rows)} rows from {input_path}")
     print(f"Wrote {len(summaries)} summary files to {output_dir.resolve()}")
-    return len(rows)
+    return len(rows), rows
 
 
 def main() -> None:

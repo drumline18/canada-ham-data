@@ -110,6 +110,24 @@ main > .panel + .panel {
   min-width: 0;
 }
 
+/* Bar chart panel: match sibling column height, center chart in remaining space */
+.panel--province-bar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.province-chart-wrap {
+  flex: 1 1 auto;
+  position: relative;
+  width: 100%;
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0 0.25rem;
+}
+
 .panel--full {
   grid-column: 1 / -1;
 }

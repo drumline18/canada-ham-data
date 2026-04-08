@@ -190,6 +190,9 @@ function fillChangeKpis(changes) {
 function renderProvinceChart(rows) {
   const top = rows.slice(0, 10);
   const ctx = document.querySelector("#province-chart");
+  const tickColor = "#9fb1d0";
+  const gridColor = "rgba(159, 177, 208, 0.12)";
+
   new Chart(ctx, {
     type: "bar",
     data: {
@@ -198,14 +201,53 @@ function renderProvinceChart(rows) {
         {
           label: "Records",
           data: top.map((r) => num(r.records)),
+          backgroundColor: "rgba(99, 164, 255, 0.72)",
+          borderColor: "rgba(255, 255, 255, 0.35)",
           borderWidth: 1,
+          borderRadius: 4,
+          barPercentage: 0.72,
+          categoryPercentage: 0.82,
         },
       ],
     },
     options: {
       responsive: true,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true } },
+      maintainAspectRatio: false,
+      layout: {
+        padding: { left: 0, right: 4, top: 6, bottom: 2 },
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (c) => `Records: ${fmt(num(c.parsed.y))}`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: {
+            color: tickColor,
+            maxRotation: 0,
+            minRotation: 0,
+            autoSkip: false,
+            font: { size: 11 },
+          },
+          border: { display: false },
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: gridColor },
+          border: { display: false },
+          ticks: {
+            color: tickColor,
+            maxTicksLimit: 7,
+            font: { size: 11 },
+            callback: (v) => fmt(v),
+          },
+        },
+      },
     },
   });
 }

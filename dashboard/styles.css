@@ -209,12 +209,61 @@ code {
 }
 
 .qual-legend {
-  margin-top: 0.8rem;
+  margin-top: 1rem;
+}
+
+.qual-legend__segments {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem 1rem;
+  align-items: start;
+}
+
+@media (max-width: 480px) {
+  .qual-legend__segments {
+    grid-template-columns: 1fr;
+  }
+}
+
+.qual-legend__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.qual-legend__swatch {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  margin-top: 0.18em;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+.qual-legend__label {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.qual-legend__letters {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border);
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 0.9rem;
+  gap: 0.35rem 0.85rem;
+  font-size: 0.78rem;
   color: var(--muted);
-  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.qual-legend__letter-pair strong {
+  color: #bed0f5;
+  font-weight: 600;
+  margin-right: 0.2rem;
 }
 
 .kpi-card--new {

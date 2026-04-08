@@ -11,6 +11,17 @@ const QUAL_LABELS = {
   E: "Basic with Honours",
 };
 
+/** Colours for the qualification doughnut and custom legend (cycles if needed). */
+const QUAL_MIX_COLORS = [
+  "#5BC0EB",
+  "#F25F5C",
+  "#F4A261",
+  "#E9C46A",
+  "#2A9D8F",
+  "#9B5DE5",
+  "#94A3B8",
+];
+
 function describeQualificationCombo(combo) {
   if (!combo || combo === "(none)") return "No listed qualification";
   if (combo === "OTHER") return "Other qualification combinations";
@@ -199,6 +210,26 @@ function renderProvinceChart(rows) {
   });
 }
 
+function renderQualMixLegend(labels, colors) {
+  const legend = document.querySelector("#qual-legend");
+  const segments = labels
+    .map(
+      (lab, i) => `
+    <div class="qual-legend__item">
+      <span class="qual-legend__swatch" style="background:${colors[i]}"></span>
+      <span class="qual-legend__label">${escapeHtml(lab)}</span>
+    </div>`,
+    )
+    .join("");
+  const letters = Object.entries(QUAL_LABELS)
+    .map(([letter, text]) => `<span class="qual-legend__letter-pair"><strong>${letter}</strong> ${escapeHtml(text)}</span>`)
+    .join("");
+  legend.innerHTML = `
+    <div class="qual-legend__segments">${segments}</div>
+    <div class="qual-legend__letters" aria-label="Qualification letter key">${letters}</div>
+  `;
+}
+
 function renderQualChart(rows) {
   const top = rows.slice(0, 6);
   const others = rows.slice(6).reduce((sum, r) => sum + num(r.records), 0);
@@ -209,16 +240,29 @@ function renderQualChart(rows) {
     values.push(others);
   }
 
+  const colors = labels.map((_, i) => QUAL_MIX_COLORS[i % QUAL_MIX_COLORS.length]);
+
   const ctx = document.querySelector("#qual-chart");
   new Chart(ctx, {
     type: "doughnut",
     data: {
       labels,
-      datasets: [{ data: values }],
+      datasets: [
+        {
+          data: values,
+          backgroundColor: colors,
+          // Match Chart.js default doughnut styling (same visual as Basic/Honours chart)
+          borderColor: "rgba(255, 255, 255, 0.92)",
+          borderWidth: 2,
+          hoverBorderColor: "#ffffff",
+        },
+      ],
     },
     options: {
       responsive: true,
+      cutout: "52%",
       plugins: {
+        legend: { display: false },
         tooltip: {
           callbacks: {
             label: (context) => `${context.label}: ${fmt(num(context.parsed))}`,
@@ -227,6 +271,8 @@ function renderQualChart(rows) {
       },
     },
   });
+
+  renderQualMixLegend(labels, colors);
 }
 
 function renderLevelSplitChart(rows) {
@@ -268,13 +314,6 @@ function renderLevelSplitChart(rows) {
       },
     },
   });
-}
-
-function renderQualificationLegend() {
-  const legend = document.querySelector("#qual-legend");
-  legend.innerHTML = Object.entries(QUAL_LABELS)
-    .map(([letter, label]) => `<span><strong>${letter}</strong>: ${label}</span>`)
-    .join("");
 }
 
 function renderQualityTable(rows) {
@@ -506,7 +545,6 @@ async function boot() {
     renderProvinceChart(provinceRows);
     renderQualChart(qualRows);
     renderLevelSplitChart(qualRows);
-    renderQualificationLegend();
     initChangesPanel(recentChanges);
     renderQualityTable(qualityRows);
     cityState.rows = cityRows;

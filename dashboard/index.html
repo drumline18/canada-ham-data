@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Amateur Radio Data Dashboard</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
+    <script src="./main.js" defer></script>
+  </head>
+  <body>
+    <header class="container">
+      <h1>Amateur Radio Data Dashboard</h1>
+      <p class="subtitle">
+        Data analyzed from ISED amateur radio callsign records across Canada.
+      </p>
+    </header>
+
+    <main class="container">
+      <section class="kpi-grid" id="kpi-grid">
+        <article class="kpi-card">
+          <h2>Total Records</h2>
+          <p id="kpi-total-records">-</p>
+        </article>
+        <article class="kpi-card">
+          <h2>Distinct Provinces</h2>
+          <p id="kpi-province-count">-</p>
+        </article>
+        <article class="kpi-card">
+          <h2>Top Province</h2>
+          <p id="kpi-top-province">-</p>
+        </article>
+        <article class="kpi-card">
+          <h2>Top Qualification</h2>
+          <p id="kpi-top-qual">-</p>
+        </article>
+      </section>
+
+      <section class="chart-grid">
+        <article class="panel">
+          <h2>Top Provinces by Record Count</h2>
+          <canvas id="province-chart" height="180"></canvas>
+        </article>
+        <article class="panel">
+          <h2>Qualification Mix</h2>
+          <canvas id="qual-chart" height="180"></canvas>
+          <div class="qual-legend" id="qual-legend"></div>
+        </article>
+        <article class="panel">
+          <h2>Basic/Honours vs Advanced</h2>
+          <canvas id="level-chart" height="180"></canvas>
+        </article>
+      </section>
+
+      <section class="panel">
+        <h2>Data Quality</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Count</th>
+                <th>Share %</th>
+              </tr>
+            </thead>
+            <tbody id="quality-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Top Cities (from summary)</h2>
+        <div class="controls">
+          <label for="city-filter">Filter city/province:</label>
+          <input id="city-filter" type="text" placeholder="e.g. HALIFAX or NS" />
+          <label for="city-page-size">Rows:</label>
+          <select id="city-page-size">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Province</th>
+                <th>City</th>
+                <th>Records</th>
+              </tr>
+            </thead>
+            <tbody id="city-body"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="city-pagination">
+          <button id="city-prev" type="button">Prev</button>
+          <span id="city-page-label">Page 1 of 1</span>
+          <button id="city-next" type="button">Next</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Top Clubs</h2>
+        <div class="controls">
+          <label for="clubs-page-size">Rows:</label>
+          <select id="clubs-page-size">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Club Name</th>
+                <th>Records</th>
+              </tr>
+            </thead>
+            <tbody id="clubs-body"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="clubs-pagination">
+          <button id="clubs-prev" type="button">Prev</button>
+          <span id="clubs-page-label">Page 1 of 1</span>
+          <button id="clubs-next" type="button">Next</button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

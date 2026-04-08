@@ -1,0 +1,166 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b1220;
+  --panel: #151e33;
+  --muted: #9fb1d0;
+  --text: #e5ecfa;
+  --accent: #63a4ff;
+  --border: #253252;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+  background: radial-gradient(circle at top, #13203b 0%, var(--bg) 50%);
+  color: var(--text);
+}
+
+.container {
+  width: min(1200px, 92vw);
+  margin: 0 auto;
+}
+
+header {
+  padding: 2rem 0 1rem;
+}
+
+h1 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.6rem, 2vw, 2.4rem);
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+}
+
+main {
+  padding-bottom: 2rem;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.9rem;
+  margin: 1rem 0;
+}
+
+.kpi-card,
+.panel {
+  background: linear-gradient(165deg, #17233e 0%, var(--panel) 100%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+main > .panel + .panel {
+  margin-top: 0.9rem;
+}
+
+.kpi-card h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.kpi-card p {
+  margin: 0.5rem 0 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.chart-grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  margin-bottom: 0.9rem;
+}
+
+.panel h2 {
+  margin-top: 0;
+  font-size: 1.05rem;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
+  flex-wrap: wrap;
+}
+
+input[type="text"] {
+  background: #0f1a30;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  min-width: 220px;
+}
+
+select,
+button {
+  background: #0f1a30;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  padding: 0.52rem 0.4rem;
+  font-size: 0.92rem;
+  white-space: nowrap;
+}
+
+th {
+  color: #bed0f5;
+  font-weight: 600;
+}
+
+code {
+  color: #b8d6ff;
+}
+
+.error {
+  border-color: #b24e4e;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.qual-legend {
+  margin-top: 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.9rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}

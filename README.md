@@ -21,7 +21,7 @@ dashboard/
   main.js            Data loading, Chart.js charts, tables
   styles.css         Dark theme
 requirements.txt     Python dependencies
-runtime.txt          Python version hint for Nixpacks / Railway
+runtime.txt          Python version hint for Railpack / Railway
 railway.toml         Railway deployment config
 Procfile             Fallback start command
 ```
@@ -53,7 +53,7 @@ Railway deploys from a Git remote. Commit your work, create a GitHub repository 
 
 1. Open [railway.app](https://railway.app) and sign in.
 2. **New project** → **Deploy from GitHub** → authorize Railway and pick this repository.
-3. Railway reads **`railway.toml`**: build uses Nixpacks, production start is **Gunicorn** (`server:app`, **1 worker** so the daily scheduler runs once), health check is **`GET /status`**. Locally you can still run `python server.py` (Flask’s dev server).
+3. Railway reads **`railway.toml`**: build uses Railpack, production start is **Gunicorn** (`server:app`, **1 worker** so the daily scheduler runs once), health check is **`GET /status`**. Locally you can still run `python server.py` (Flask’s dev server).
 
 ### Step 3 — Add a persistent volume
 

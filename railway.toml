@@ -1,5 +1,5 @@
 [build]
-builder = "nixpacks"
+builder = "railpack"
 
 [deploy]
 # Single worker: APScheduler and background analysis must not run per process.

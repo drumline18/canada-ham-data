@@ -193,11 +193,20 @@ def _start_scheduler() -> None:
     log.info("Scheduler started - analysis will run daily at 03:00 UTC.")
 
 
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
+_startup_done = False
 
-if __name__ == "__main__":
+
+def init_background_tasks() -> None:
+    """
+    One-time boot: output dir, DB→JSON sync, optional analysis thread, cron.
+    Runs on import so Gunicorn (production) and `python server.py` both see it.
+    Use a single Gunicorn worker so APScheduler is not duplicated.
+    """
+    global _startup_done
+    if _startup_done:
+        return
+    _startup_done = True
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     _sync_outputs_from_db()
 
@@ -210,5 +219,14 @@ if __name__ == "__main__":
 
     _start_scheduler()
 
-    log.info("Starting Flask on port %d...", PORT)
-    app.run(host="0.0.0.0", port=PORT)
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+init_background_tasks()
+
+
+if __name__ == "__main__":
+    log.info("Starting Flask development server on port %d (use gunicorn on Railway).", PORT)
+    app.run(host="0.0.0.0", port=PORT, threaded=True)

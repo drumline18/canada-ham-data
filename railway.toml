@@ -2,7 +2,9 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "python server.py"
+# Single worker: APScheduler and background analysis must not run per process.
+# Access + error logs to stdout so platforms (e.g. Railway) don’t treat them as stderr “errors”.
+startCommand = "gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 4 --access-logfile - --error-logfile - --log-level info server:app"
 healthcheckPath = "/status"
 # Allow slow cold starts; /status returns 200 as soon as Flask is listening.
 healthcheckTimeout = 120

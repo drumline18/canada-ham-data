@@ -33,7 +33,7 @@ OUTPUT_DIR = Path(os.environ.get("OUTPUT_DIR", "output"))
 _EXTRACTED_NAME = "amateur_delim.txt"
 
 def _default_db_path(output_dir: Path) -> Path:
-    return Path(os.environ.get("DB_PATH", str(output_dir.parent / "ham.db")))
+    return Path(os.environ.get("DB_PATH", str(output_dir / "ham.db")))
 
 
 def download_and_analyze(

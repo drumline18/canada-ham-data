@@ -24,6 +24,7 @@ from pathlib import Path
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, abort, jsonify, send_from_directory
 
+import db as db_module
 import run_analysis
 
 logging.basicConfig(
@@ -33,7 +34,8 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 OUTPUT_DIR = Path(os.environ.get("OUTPUT_DIR", "output"))
-DB_PATH = Path(os.environ.get("DB_PATH", str(Path(os.environ.get("OUTPUT_DIR", "output")).parent / "ham.db")))
+# Default: database next to generated CSVs (same folder as OUTPUT_DIR).
+DB_PATH = Path(os.environ.get("DB_PATH", str(OUTPUT_DIR / "ham.db")))
 PORT = int(os.environ.get("PORT", 8080))
 STALE_HOURS = 25  # re-run if last update is older than this
 READY_OUTPUT_FILES = (
@@ -75,7 +77,9 @@ def output_file(filename: str):
     """Serve generated CSV / JSON files."""
     if not OUTPUT_DIR.exists():
         abort(503, description="Output not yet available — analysis pending.")
-    return send_from_directory(OUTPUT_DIR.resolve(), filename)
+    response = send_from_directory(OUTPUT_DIR.resolve(), filename, max_age=0)
+    response.headers["Cache-Control"] = "no-store, max-age=0"
+    return response
 
 
 @app.route("/status")
@@ -171,6 +175,17 @@ def _is_output_stale() -> bool:
 # Scheduler
 # ---------------------------------------------------------------------------
 
+def _sync_outputs_from_db() -> None:
+    """Prune baseline noise in SQLite, then rewrite JSON/CSV outputs from DB."""
+    if not DB_PATH.exists():
+        return
+    conn = db_module.init_db(DB_PATH)
+    try:
+        db_module.write_output_files(conn, OUTPUT_DIR)
+    finally:
+        conn.close()
+
+
 def _start_scheduler() -> None:
     scheduler = BackgroundScheduler(timezone="UTC")
     scheduler.add_job(_run_analysis_safe, "cron", hour=3, minute=0)
@@ -184,6 +199,7 @@ def _start_scheduler() -> None:
 
 if __name__ == "__main__":
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    _sync_outputs_from_db()
 
     if _is_output_stale():
         log.info("Output is missing or stale - starting background analysis.")

@@ -644,7 +644,7 @@ async function boot() {
       loadCsv(`${DATA_DIR}/top_clubs.csv`),
       loadCsv(`${DATA_DIR}/club_summary.csv`),
       loadJson(`${DATA_DIR}/snapshot_history.json`).catch(() => []),
-      loadJson(`${DATA_DIR}/recent_changes.json`).catch(() => ({})),
+      loadJson(`${DATA_DIR}/recent_changes.json?nocache=${Date.now()}`).catch(() => ({})),
     ]);
 
     fillKpis(provinceRows, qualRows, status.row_count);

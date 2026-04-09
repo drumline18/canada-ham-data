@@ -5,7 +5,8 @@ SQLite persistence layer for the Amateur Radio Data Dashboard.
 Tables:
   snapshots  — one row per daily run
   records    — current state of every callsign (upserted each run)
-  changes    — append-only log of new / removed / qual_upgrade / qual_downgrade events
+  changes    — append-only log of new / removed / qual_upgrade / qual_downgrade
+               (new-call events are skipped on the first import when records was empty)
 """
 
 from __future__ import annotations
@@ -71,6 +72,103 @@ def init_db(db_path: Path) -> sqlite3.Connection:
     return conn
 
 
+def prune_baseline_new_rows(conn: sqlite3.Connection) -> int:
+    """
+    Remove legacy baseline 'new' rows from the changes log.
+
+    Older builds logged every callsign as 'new' on the first import. Safe to
+    run repeatedly (idempotent). Returns total rows removed.
+    """
+    is_new = "lower(trim(change_type)) = 'new'"
+    deleted = 0
+
+    # Rows pointing at a missing snapshot (e.g. DB repair deleted old snapshots).
+    cur = conn.execute(
+        f"""SELECT COUNT(*) FROM changes WHERE {is_new}
+            AND snapshot_id IS NOT NULL
+            AND snapshot_id NOT IN (SELECT id FROM snapshots)"""
+    )
+    n = int(cur.fetchone()[0])
+    if n:
+        conn.execute(
+            f"""DELETE FROM changes WHERE {is_new}
+                AND snapshot_id IS NOT NULL
+                AND snapshot_id NOT IN (SELECT id FROM snapshots)"""
+        )
+        deleted += n
+
+    cur = conn.execute(
+        f"""SELECT COUNT(*) FROM changes WHERE {is_new} AND snapshot_id IS NULL"""
+    )
+    n = int(cur.fetchone()[0])
+    if n:
+        conn.execute(f"DELETE FROM changes WHERE {is_new} AND snapshot_id IS NULL")
+        deleted += n
+
+    # Baseline import logged every row as "new" on a later snapshot (not always id 1):
+    # if new-call count for a snapshot equals that run's row_count, it is bulk noise.
+    cur = conn.execute(
+        f"""SELECT COUNT(*) FROM changes WHERE {is_new}
+            AND snapshot_id IN (
+                SELECT s.id FROM snapshots s
+                INNER JOIN (
+                    SELECT snapshot_id, COUNT(*) AS cnt
+                    FROM changes
+                    WHERE {is_new} AND snapshot_id IS NOT NULL
+                    GROUP BY snapshot_id
+                ) t ON t.snapshot_id = s.id
+                WHERE t.cnt = s.row_count AND s.row_count >= 1000
+            )"""
+    )
+    n = int(cur.fetchone()[0])
+    if n:
+        conn.execute(
+            f"""DELETE FROM changes WHERE {is_new}
+                AND snapshot_id IN (
+                    SELECT s.id FROM snapshots s
+                    INNER JOIN (
+                        SELECT snapshot_id, COUNT(*) AS cnt
+                        FROM changes
+                        WHERE {is_new} AND snapshot_id IS NOT NULL
+                        GROUP BY snapshot_id
+                    ) t ON t.snapshot_id = s.id
+                    WHERE t.cnt = s.row_count AND s.row_count >= 1000
+                )"""
+        )
+        deleted += n
+
+    cur = conn.execute("SELECT COUNT(*) FROM snapshots")
+    snap_n = int(cur.fetchone()[0])
+
+    if snap_n <= 1:
+        cur = conn.execute(f"SELECT COUNT(*) FROM changes WHERE {is_new}")
+        n = int(cur.fetchone()[0])
+        if n:
+            conn.execute(f"DELETE FROM changes WHERE {is_new}")
+            deleted += n
+    else:
+        cur = conn.execute(
+            "SELECT id FROM snapshots ORDER BY taken_at ASC, id ASC LIMIT 1"
+        )
+        row = cur.fetchone()
+        if row:
+            first_id = row[0]
+            cur = conn.execute(
+                f"SELECT COUNT(*) FROM changes WHERE {is_new} AND snapshot_id = ?",
+                (first_id,),
+            )
+            n = int(cur.fetchone()[0])
+            if n:
+                conn.execute(
+                    f"DELETE FROM changes WHERE {is_new} AND snapshot_id = ?",
+                    (first_id,),
+                )
+                deleted += n
+
+    conn.commit()
+    return deleted
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -122,6 +220,10 @@ def apply_diff(
     Diff new_rows against old_records, write changes, and upsert records table.
 
     new_rows is the raw list of dicts from analyze_amateur.read_rows().
+
+    When old_records is empty (first import), callsigns are not logged as new
+    events; that snapshot is baseline data so Recent Changes stays empty until
+    a later run finds real diffs.
     """
     detected_at = datetime.now(timezone.utc).isoformat()
     new_by_callsign: Dict[str, dict] = {
@@ -129,6 +231,7 @@ def apply_diff(
     }
 
     changes_to_insert: List[tuple] = []
+    baseline_import = len(old_records) == 0
 
     # New and modified callsigns
     for callsign, new_row in new_by_callsign.items():
@@ -136,9 +239,10 @@ def apply_diff(
         prov = (new_row.get("prov_cd") or "").strip().upper()
 
         if callsign not in old_records:
-            changes_to_insert.append(
-                (snapshot_id, detected_at, callsign, "new", None, new_quals or None, prov)
-            )
+            if not baseline_import:
+                changes_to_insert.append(
+                    (snapshot_id, detected_at, callsign, "new", None, new_quals or None, prov)
+                )
         else:
             old_quals = _qual_string(old_records[callsign])
             if new_quals != old_quals:
@@ -229,6 +333,9 @@ def apply_diff(
 
 def write_output_files(conn: sqlite3.Connection, output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
+    pruned = prune_baseline_new_rows(conn)
+    if pruned:
+        print(f"[db] Pruned {pruned:,} baseline new-call rows from changes")
     _write_recent_changes(conn, output_dir)
     _write_snapshot_history(conn, output_dir)
 

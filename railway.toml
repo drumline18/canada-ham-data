@@ -4,6 +4,7 @@ builder = "nixpacks"
 [deploy]
 startCommand = "python server.py"
 healthcheckPath = "/status"
-healthcheckTimeout = 30
+# Allow slow cold starts; /status returns 200 as soon as Flask is listening.
+healthcheckTimeout = 120
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3

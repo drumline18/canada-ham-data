@@ -21,6 +21,7 @@ dashboard/
   main.js            Data loading, Chart.js charts, tables
   styles.css         Dark theme
 requirements.txt     Python dependencies
+runtime.txt          Python version hint for Nixpacks / Railway
 railway.toml         Railway deployment config
 Procfile             Fallback start command
 ```
@@ -42,43 +43,55 @@ Output files (written to `OUTPUT_DIR` after each run):
 
 ---
 
-## Deploying to Railway
+## Deploying to Railway (step by step)
 
-### 1. Create the project
+### Step 1 — Push this repo to GitHub
 
-1. Go to [railway.app](https://railway.app) and create a new project.
-2. Choose **Deploy from GitHub repo** and select this repository.
-3. Railway will detect `railway.toml` and use it automatically.
+Railway deploys from a Git remote. Commit your work, create a GitHub repository if needed, and push `main` (or your default branch).
 
-### 2. Add a persistent volume
+### Step 2 — Create a Railway project
 
-The database and output files must survive service restarts.
+1. Open [railway.app](https://railway.app) and sign in.
+2. **New project** → **Deploy from GitHub** → authorize Railway and pick this repository.
+3. Railway reads **`railway.toml`**: build uses Nixpacks, start command is `python server.py`, health check is **`GET /status`**.
 
-1. In the Railway project, open your service → **Settings → Volumes**.
-2. Click **Add Volume**, set the **Mount Path** to `/data`, and save.
+### Step 3 — Add a persistent volume
 
-### 3. Set environment variables
+The SQLite DB and generated CSV/JSON files must live on a volume or they disappear on every redeploy.
 
-In the Railway service → **Variables**, add:
+1. Open your **service** (not the project root) → **Settings** → **Volumes**.
+2. **Add volume** → **Mount path**: `/data` → Add.
+3. Everything under `/data` persists across deploys.
 
-| Variable | Value | Notes |
-|----------|-------|-------|
-| `OUTPUT_DIR` | `/data/output` | Where CSVs and JSON files are written |
-| `DB_PATH` | `/data/ham.db` | SQLite database file |
-| `DATA_URL` | `https://apc-cap.ic.gc.ca/datafiles/amateur_delim.zip` | Optional — this is the default |
+### Step 4 — Set environment variables
 
-`PORT` is set automatically by Railway; you do not need to add it.
+Open the service → **Variables** → **New variable**.
 
-### 4. Deploy
+| Variable | Suggested value | Required? |
+|----------|-----------------|-----------|
+| `OUTPUT_DIR` | `/data/output` | **Yes** — must point inside the volume. |
+| `DB_PATH` | *(omit)* | Optional. If omitted, the app uses **`$OUTPUT_DIR/ham.db`** (e.g. `/data/output/ham.db`). Set explicitly only if you want the DB elsewhere, e.g. `/data/ham.db`. |
+| `DATA_URL` | `https://apc-cap.ic.gc.ca/datafiles/amateur_delim.zip` | Optional (same default in code). |
 
-Click **Deploy** (or push a commit). Railway will:
+Do **not** set `PORT` — Railway injects it; `server.py` already binds `0.0.0.0` and reads `PORT`.
 
-1. Install dependencies from `requirements.txt`.
-2. Start `python server.py` (via `railway.toml`).
-3. On first boot, detect that the output is missing and immediately run the full download + analysis pipeline in a background thread.
-4. Start the APScheduler cron job that repeats the pipeline daily at **03:00 UTC**.
+After saving variables, trigger a **Redeploy** so the service picks them up.
 
-Railway uses `/status` as the health check. The endpoint stays available during the first bootstrap run and includes explicit readiness fields so the dashboard can wait for data instead of failing on missing files.
+### Step 5 — Deploy and wait for data
+
+1. Railway builds from `requirements.txt` and `runtime.txt`, then runs `python server.py`.
+2. The first boot may take **several minutes**: the app starts Flask (health check passes), then a **background thread** downloads the ISED ZIP and runs the full analysis if output is missing or older than 25 hours.
+3. Watch **Deployments** → **View logs** for `[run_analysis]` and `[db]` lines.
+4. In the browser, open the **public URL** (service → **Settings** → **Networking** → **Generate domain**). The dashboard shows “Preparing dashboard data” until `/status` reports `"ready": true`.
+
+### Step 6 — Daily updates
+
+`server.py` schedules **`run_analysis.download_and_analyze`** every day at **03:00 UTC**. No extra Railway cron is required.
+
+### Troubleshooting
+
+- **`output/` directory not found` / 503 on `/output/...`**: Analysis not finished or failed — check logs and `last_error` in `/status`.
+- **Empty dashboard after redeploy without a volume**: Add the `/data` volume and set `OUTPUT_DIR=/data/output` as above, then run a fresh analysis (or restore files from backup).
 
 Example `/status` response after a successful run:
 
@@ -139,6 +152,6 @@ python analyze_amateur.py --input amateur_delim.txt --output-dir output
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `OUTPUT_DIR` | `output` | Directory for CSV and JSON output files |
-| `DB_PATH` | `<OUTPUT_DIR>/../ham.db` | SQLite database path |
+| `DB_PATH` | `<OUTPUT_DIR>/ham.db` | SQLite database path |
 | `DATA_URL` | ISED ZIP URL | Source data URL |
 | `PORT` | `8080` | HTTP port (Railway sets this automatically) |

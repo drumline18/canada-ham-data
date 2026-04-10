@@ -1,4 +1,5 @@
 const DATA_DIR = "/output";
+const TODAY_UTC = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
 const cityState = { page: 1, pageSize: 25, filterText: "", rows: [] };
 const clubsState = { page: 1, pageSize: 25, rows: [] };
 const changesState = { page: 1, pageSize: 25, activeTab: "new", data: {} };
@@ -640,15 +641,15 @@ async function boot() {
       snapshotHistory,
       recentChanges,
     ] = await Promise.all([
-      loadCsv(`${DATA_DIR}/province_summary.csv`),
-      loadCsv(`${DATA_DIR}/qualification_combo_summary.csv`),
-      loadCsv(`${DATA_DIR}/qualification_by_province.csv`),
-      loadCsv(`${DATA_DIR}/data_quality_summary.csv`),
-      loadCsv(`${DATA_DIR}/city_summary.csv`),
-      loadCsv(`${DATA_DIR}/top_clubs.csv`),
-      loadCsv(`${DATA_DIR}/club_summary.csv`),
-      loadJson(`${DATA_DIR}/snapshot_history.json`).catch(() => []),
-      loadJson(`${DATA_DIR}/recent_changes.json?nocache=${Date.now()}`).catch(() => ({})),
+      loadCsv(`${DATA_DIR}/province_summary.csv?v=${TODAY_UTC}`),
+      loadCsv(`${DATA_DIR}/qualification_combo_summary.csv?v=${TODAY_UTC}`),
+      loadCsv(`${DATA_DIR}/qualification_by_province.csv?v=${TODAY_UTC}`),
+      loadCsv(`${DATA_DIR}/data_quality_summary.csv?v=${TODAY_UTC}`),
+      loadCsv(`${DATA_DIR}/city_summary.csv?v=${TODAY_UTC}`),
+      loadCsv(`${DATA_DIR}/top_clubs.csv?v=${TODAY_UTC}`),
+      loadCsv(`${DATA_DIR}/club_summary.csv?v=${TODAY_UTC}`),
+      loadJson(`${DATA_DIR}/snapshot_history.json?v=${TODAY_UTC}`).catch(() => []),
+      loadJson(`${DATA_DIR}/recent_changes.json?v=${TODAY_UTC}`).catch(() => ({})),
     ]);
 
     fillKpis(provinceRows, qualRows, status.row_count);

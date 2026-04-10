@@ -90,12 +90,11 @@ def status():
     else:
         data = {"updated_at": None, "row_count": None, "source_url": None}
     state = _get_analysis_state()
-    data["output_dir"] = str(OUTPUT_DIR)
     data["ready"] = _is_output_ready()
     data["analysis_running"] = state["running"]
     data["last_started_at"] = state["last_started_at"]
     data["last_completed_at"] = state["last_completed_at"]
-    data["last_error"] = state["last_error"]
+    data["last_error"] = "Analysis failed. Check server logs." if state["last_error"] else None
     return jsonify(data)
 
 

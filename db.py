@@ -186,10 +186,10 @@ def _qual_string(row: dict) -> str:
 # Read
 # ---------------------------------------------------------------------------
 
-def get_current_records(conn: sqlite3.Connection) -> Dict[str, sqlite3.Row]:
+def get_current_records(conn: sqlite3.Connection) -> Dict[str, dict]:
     """Return all rows in the records table keyed by callsign."""
     cur = conn.execute("SELECT * FROM records")
-    return {row["callsign"]: row for row in cur.fetchall()}
+    return {row["callsign"]: dict(row) for row in cur.fetchall()}
 
 
 # ---------------------------------------------------------------------------
@@ -213,7 +213,7 @@ def insert_snapshot(
 def apply_diff(
     conn: sqlite3.Connection,
     snapshot_id: int,
-    old_records: Dict[str, sqlite3.Row],
+    old_records: Dict[str, dict],
     new_rows: List[dict],
 ) -> None:
     """

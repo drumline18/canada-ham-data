@@ -370,7 +370,7 @@ function renderQualityTable(rows) {
     .map(
       (r) => `
       <tr>
-        <td>${r.metric}</td>
+        <td>${escapeHtml(r.metric || "")}</td>
         <td>${fmt(num(r.count))}</td>
         <td>${num(r.share_pct).toFixed(3)}</td>
       </tr>
@@ -454,8 +454,8 @@ function renderCityTable() {
       (r) => `
       <tr>
         <td>${r.rank}</td>
-        <td>${r.province}</td>
-        <td>${r.city}</td>
+        <td>${escapeHtml(r.province || "")}</td>
+        <td>${escapeHtml(r.city || "")}</td>
         <td>${fmt(num(r.records))}</td>
       </tr>
     `
@@ -479,7 +479,7 @@ function renderClubTable() {
       (r, idx) => `
       <tr>
         <td>${start + idx + 1}</td>
-        <td>${r.club_name}</td>
+        <td>${escapeHtml(r.club_name || "")}</td>
         <td>${fmt(num(r.records))}</td>
       </tr>
     `
@@ -540,19 +540,23 @@ function renderChangesTable() {
   } else {
     body.innerHTML = visible
       .map((r) => {
-        const date = (r.detected_at || "").slice(0, 10);
+        const date = escapeHtml((r.detected_at || "").slice(0, 10));
+        const callsign = escapeHtml(r.callsign || "");
+        const province = escapeHtml(r.prov_cd || "");
         if (isQual) {
+          const oldQuals = escapeHtml(r.old_quals || "");
+          const newQuals = escapeHtml(r.new_quals || "");
           return `<tr>
-            <td><code>${r.callsign}</code></td>
-            <td>${r.prov_cd || ""}</td>
-            <td>${r.old_quals || ""}</td>
-            <td>${r.new_quals || ""}</td>
+            <td><code>${callsign}</code></td>
+            <td>${province}</td>
+            <td>${oldQuals}</td>
+            <td>${newQuals}</td>
             <td>${date}</td>
           </tr>`;
         }
         return `<tr>
-          <td><code>${r.callsign}</code></td>
-          <td>${r.prov_cd || ""}</td>
+          <td><code>${callsign}</code></td>
+          <td>${province}</td>
           <td>${date}</td>
         </tr>`;
       })

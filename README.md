@@ -100,7 +100,6 @@ Example `/status` response after a successful run:
   "updated_at": "2026-04-08T03:00:01+00:00",
   "row_count": 91500,
   "source_url": "https://apc-cap.ic.gc.ca/datafiles/amateur_delim.zip",
-  "output_dir": "/data/output",
   "ready": true,
   "analysis_running": false,
   "last_started_at": "2026-04-08T03:00:00+00:00",

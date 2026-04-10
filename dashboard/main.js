@@ -494,18 +494,25 @@ function renderClubTable() {
 
 function renderTrendChart(history) {
   if (!history || history.length === 0) return;
+  const deduped = Object.values(
+    history.reduce((acc, r) => {
+      const date = r.taken_at.slice(0, 10);
+      if (!acc[date] || r.taken_at > acc[date].taken_at) acc[date] = r;
+      return acc;
+    }, {}),
+  );
   const ctx = document.querySelector("#trend-chart");
   new Chart(ctx, {
     type: "line",
     data: {
-      labels: history.map((r) => r.taken_at.slice(0, 10)),
+      labels: deduped.map((r) => r.taken_at.slice(0, 10)),
       datasets: [
         {
           label: "Total Licensees",
-          data: history.map((r) => r.row_count),
+          data: deduped.map((r) => r.row_count),
           tension: 0.3,
           fill: true,
-          pointRadius: history.length < 30 ? 4 : 2,
+          pointRadius: deduped.length < 30 ? 4 : 2,
         },
       ],
     },

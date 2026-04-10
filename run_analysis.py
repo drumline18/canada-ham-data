@@ -75,7 +75,12 @@ def download_and_analyze(
     conn = db_module.init_db(db_path)
     old_records = db_module.get_current_records(conn)
     snapshot_id = db_module.insert_snapshot(conn, timestamp, row_count, data_url)
-    db_module.apply_diff(conn, snapshot_id, old_records, new_rows)
+    try:
+        db_module.apply_diff(conn, snapshot_id, old_records, new_rows)
+    except Exception:
+        conn.execute("DELETE FROM snapshots WHERE id = ?", (snapshot_id,))
+        conn.commit()
+        raise
     db_module.write_output_files(conn, output_dir)
     conn.close()
 

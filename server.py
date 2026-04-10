@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from flask import Flask, abort, jsonify, send_from_directory
+from flask import Flask, abort, jsonify, request, send_from_directory
 
 import db as db_module
 import run_analysis
@@ -37,6 +37,7 @@ OUTPUT_DIR = Path(os.environ.get("OUTPUT_DIR", "output"))
 # Default: database next to generated CSVs (same folder as OUTPUT_DIR).
 DB_PATH = Path(os.environ.get("DB_PATH", str(OUTPUT_DIR / "ham.db")))
 PORT = int(os.environ.get("PORT", 8080))
+TRIGGER_TOKEN = os.environ.get("TRIGGER_TOKEN", "")
 STALE_HOURS = 25  # re-run if last update is older than this
 READY_OUTPUT_FILES = (
     "province_summary.csv",
@@ -80,6 +81,22 @@ def output_file(filename: str):
     response = send_from_directory(OUTPUT_DIR.resolve(), filename, max_age=0)
     response.headers["Cache-Control"] = "no-store, max-age=0"
     return response
+
+
+@app.route("/trigger")
+def trigger():
+    """Manually kick off an analysis run. Requires ?token=<TRIGGER_TOKEN>."""
+    if not TRIGGER_TOKEN:
+        abort(403, description="TRIGGER_TOKEN env var not set — endpoint disabled.")
+    if request.args.get("token") != TRIGGER_TOKEN:
+        abort(403, description="Invalid token.")
+    state = _get_analysis_state()
+    if state["running"]:
+        return jsonify({"queued": False, "reason": "Analysis already running."}), 409
+    thread = threading.Thread(target=_run_analysis_safe, daemon=True)
+    thread.start()
+    log.info("Manual trigger: analysis started.")
+    return jsonify({"queued": True})
 
 
 @app.route("/status")

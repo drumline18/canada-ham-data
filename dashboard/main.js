@@ -192,9 +192,17 @@ function fillKpis(provinceRows, qualRows, canonicalRowCount) {
 }
 
 function fillChangeKpis(changes) {
-  document.querySelector("#kpi-new-callsigns").textContent = fmt((changes.new || []).length);
-  document.querySelector("#kpi-removed-callsigns").textContent = fmt((changes.removed || []).length);
-  document.querySelector("#kpi-upgrades").textContent = fmt((changes.qual_upgrade || []).length);
+  const run = changes.last_run;
+  if (run) {
+    document.querySelector("#kpi-new-callsigns").textContent = fmt((run.new || []).length);
+    document.querySelector("#kpi-removed-callsigns").textContent = fmt((run.removed || []).length);
+    document.querySelector("#kpi-upgrades").textContent = fmt((run.qual_upgrade || []).length);
+  } else {
+    // Older `recent_changes.json` without per-run grouping.
+    document.querySelector("#kpi-new-callsigns").textContent = fmt((changes.new || []).length);
+    document.querySelector("#kpi-removed-callsigns").textContent = fmt((changes.removed || []).length);
+    document.querySelector("#kpi-upgrades").textContent = fmt((changes.qual_upgrade || []).length);
+  }
 }
 
 function renderProvinceChart(rows) {

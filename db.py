@@ -340,16 +340,10 @@ def write_output_files(conn: sqlite3.Connection, output_dir: Path) -> None:
     _write_snapshot_history(conn, output_dir)
 
 
-def _write_recent_changes(conn: sqlite3.Connection, output_dir: Path) -> None:
-    cur = conn.execute(
-        """SELECT callsign, change_type, old_quals, new_quals, prov_cd, detected_at
-           FROM changes
-           WHERE datetime(detected_at) >= datetime('now', ?)
-           ORDER BY detected_at DESC""",
-        (f"-{RECENT_DAYS} days",),
-    )
-    rows = cur.fetchall()
-
+def _group_changes_by_type(
+    rows: List[sqlite3.Row],
+) -> dict:
+    """Group change rows for JSON output (Recent Changes + since-last-run KPIs)."""
     grouped: dict = {"new": [], "removed": [], "qual_upgrade": [], "qual_downgrade": []}
     for r in rows:
         entry = {
@@ -362,11 +356,42 @@ def _write_recent_changes(conn: sqlite3.Connection, output_dir: Path) -> None:
         if r["new_quals"] is not None:
             entry["new_quals"] = r["new_quals"]
         grouped.setdefault(r["change_type"], []).append(entry)
+    return grouped
+
+
+def _write_recent_changes(conn: sqlite3.Connection, output_dir: Path) -> None:
+    cur = conn.execute(
+        """SELECT callsign, change_type, old_quals, new_quals, prov_cd, detected_at
+           FROM changes
+           WHERE datetime(detected_at) >= datetime('now', ?)
+           ORDER BY detected_at DESC""",
+        (f"-{RECENT_DAYS} days",),
+    )
+    grouped = _group_changes_by_type(cur.fetchall())
+
+    last_run: dict = {}
+    cur = conn.execute("SELECT id, taken_at FROM snapshots ORDER BY id DESC LIMIT 1")
+    last_snap = cur.fetchone()
+    if last_snap:
+        cur = conn.execute(
+            """SELECT callsign, change_type, old_quals, new_quals, prov_cd, detected_at
+               FROM changes
+               WHERE snapshot_id = ?
+               ORDER BY detected_at DESC""",
+            (last_snap["id"],),
+        )
+        lr_grouped = _group_changes_by_type(cur.fetchall())
+        last_run = {
+            "snapshot_id": int(last_snap["id"]),
+            "taken_at":    last_snap["taken_at"],
+            **lr_grouped,
+        }
 
     out = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "days":         RECENT_DAYS,
         **grouped,
+        **({"last_run": last_run} if last_run else {}),
     }
     path = output_dir / "recent_changes.json"
     path.write_text(json.dumps(out, indent=2), encoding="utf-8")

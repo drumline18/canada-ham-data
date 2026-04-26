@@ -42,6 +42,64 @@ main {
   padding-bottom: 2rem;
 }
 
+/* Inlined icon sprite: Lucide (lucide.dev, ISC) — no runtime icon library. */
+.i-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.icon {
+  display: inline-block;
+  width: 1.1em;
+  height: 1.1em;
+  flex-shrink: 0;
+  vertical-align: -0.2em;
+  color: #a8b8d4;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.page-title__icon {
+  width: 1.55rem;
+  height: 1.55rem;
+  color: var(--accent);
+  vertical-align: -0.1em;
+}
+
+.kpi-card--new h2 .icon {
+  color: #4caf72;
+}
+.kpi-card--removed h2 .icon {
+  color: #e05555;
+}
+.kpi-card--upgrade h2 .icon {
+  color: #63a4ff;
+}
+
+.panel h2:not(.trend-title) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.55rem;
+  line-height: 1.35;
+}
+
+.panel h2:not(.trend-title) .icon {
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 0.05em;
+}
+
 .kpi-grid {
   display: grid;
   gap: 0.9rem;
@@ -64,6 +122,9 @@ main {
 }
 
 .kpi-changes-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   grid-column: 1 / -1;
   margin: 0 0 0.35rem;
   padding: 0.4rem 0.85rem 0.4rem 0.7rem;
@@ -80,6 +141,13 @@ main {
   border-left: 3px solid var(--accent);
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.kpi-changes-eyebrow .icon {
+  color: var(--accent);
+  width: 0.95em;
+  height: 0.95em;
+  vertical-align: 0;
 }
 
 @media (max-width: 700px) {
@@ -114,6 +182,9 @@ main > .panel + .panel {
 }
 
 .kpi-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   margin: 0;
   font-size: 0.95rem;
   color: var(--muted);
@@ -189,9 +260,21 @@ main > .panel + .panel {
 }
 
 .trend-title__text {
+  display: inline-flex;
   flex: 0 1 auto;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.45rem;
   min-width: min(220px, 100%);
+  font-size: 1.05rem;
   font-weight: 600;
+}
+
+.trend-title__text .icon {
+  color: var(--accent);
+  width: 1.05em;
+  height: 1.05em;
+  vertical-align: 0;
 }
 
 .trend-header-controls {

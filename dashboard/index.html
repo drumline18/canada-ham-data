@@ -9,8 +9,124 @@
     <script src="./main.js" defer></script>
   </head>
   <body>
+    <!-- Icon sprite: paths from Lucide (https://lucide.dev, ISC license, lucide-static) -->
+    <svg class="i-defs" aria-hidden="true" focusable="false" width="0" height="0">
+      <symbol id="i-radio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9" />
+        <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5" />
+        <circle cx="12" cy="12" r="2" />
+        <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5" />
+        <path d="M19.1 4.9C23 8.8 23 15.1 19.1 19" />
+      </symbol>
+      <symbol id="i-database" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="12" cy="5" rx="9" ry="3" />
+        <path d="M3 5V19A9 3 0 0 0 21 19V5" />
+        <path d="M3 12A9 3 0 0 0 21 12" />
+      </symbol>
+      <symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z" />
+        <path d="M15 5.764v15" />
+        <path d="M9 3.236v15" />
+      </symbol>
+      <symbol id="i-map-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
+        <circle cx="12" cy="10" r="3" />
+      </symbol>
+      <symbol id="i-trending" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+        <polyline points="16 7 22 7 22 13" />
+      </symbol>
+      <symbol id="i-award" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526" />
+        <circle cx="12" cy="8" r="6" />
+      </symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14" />
+        <path d="M12 5v14" />
+      </symbol>
+      <symbol id="i-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14" />
+      </symbol>
+      <symbol id="i-arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <path d="m16 12-4-4-4 4" />
+        <path d="M12 16V8" />
+      </symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 2v4" />
+        <path d="M16 2v4" />
+        <rect width="18" height="18" x="3" y="4" rx="2" />
+        <path d="M3 10h18" />
+      </symbol>
+      <symbol id="i-chart-col" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+        <path d="M18 17V9" />
+        <path d="M13 17V5" />
+        <path d="M8 17v-3" />
+      </symbol>
+      <symbol id="i-chart-pie" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z" />
+        <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />
+      </symbol>
+      <symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+        <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
+        <path d="M7 21h10" />
+        <path d="M12 3v18" />
+        <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" />
+      </symbol>
+      <symbol id="i-chart-line" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+        <path d="m19 9-5 5-4-4-3 3" />
+      </symbol>
+      <symbol id="i-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+        <path d="M3 3v5h5" />
+        <path d="M12 7v5l4 2" />
+      </symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+        <path d="m9 12 2 2 4-4" />
+      </symbol>
+      <symbol id="i-table" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18" />
+      </symbol>
+      <symbol id="i-building" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
+        <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
+        <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
+        <path d="M10 6h4" />
+        <path d="M10 10h4" />
+        <path d="M10 14h4" />
+        <path d="M10 18h4" />
+      </symbol>
+      <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </symbol>
+      <symbol id="i-group" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 7V5c0-1.1.9-2 2-2h2" />
+        <path d="M17 3h2c1.1 0 2 .9 2 2v2" />
+        <path d="M21 17v2c0 1.1-.9 2-2 2h-2" />
+        <path d="M7 21H5c-1.1 0-2-.9-2-2v-2" />
+        <rect width="7" height="5" x="7" y="7" rx="1" />
+        <rect width="7" height="5" x="10" y="12" rx="1" />
+      </symbol>
+      <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="20" height="16" x="2" y="4" rx="2" />
+        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+      </symbol>
+    </svg>
+
     <header class="container">
-      <h1>Amateur Radio Data Dashboard</h1>
+      <h1 class="page-title">
+        <svg class="icon page-title__icon" aria-hidden="true" focusable="false">
+          <use href="#i-radio" />
+        </svg>
+        <span>Amateur Radio Data Dashboard</span>
+      </h1>
       <p class="subtitle">
         Data analyzed from ISED amateur radio callsign records across Canada.
       </p>
@@ -19,19 +135,27 @@
     <main class="container">
       <section class="kpi-grid kpi-grid--main" id="kpi-grid">
         <article class="kpi-card">
-          <h2>Total Records</h2>
+          <h2>
+            <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-database" /></svg> Total Records
+          </h2>
           <p id="kpi-total-records">-</p>
         </article>
         <article class="kpi-card">
-          <h2>Distinct Provinces</h2>
+          <h2>
+            <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-map" /></svg> Distinct Provinces
+          </h2>
           <p id="kpi-province-count">-</p>
         </article>
         <article class="kpi-card">
-          <h2>Top Province</h2>
+          <h2>
+            <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-map-pin" /></svg> Top Province
+          </h2>
           <p id="kpi-top-province">-</p>
         </article>
         <article class="kpi-card">
-          <h2>Top Qualification</h2>
+          <h2>
+            <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-award" /></svg> Top Qualification
+          </h2>
           <p id="kpi-top-qual">-</p>
         </article>
       </section>
@@ -39,35 +163,51 @@
         class="kpi-grid kpi-grid--changes"
         aria-label="Today's changes from the latest ISED data import: new, removed, and qualification upgrades"
       >
-        <p class="kpi-changes-eyebrow">Today's changes</p>
+        <p class="kpi-changes-eyebrow">
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-calendar" /></svg> Today's changes
+        </p>
         <article class="kpi-card kpi-card--new">
-          <h2>New</h2>
+          <h2>
+            <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-plus" /></svg> New
+          </h2>
           <p id="kpi-new-callsigns">-</p>
         </article>
         <article class="kpi-card kpi-card--removed">
-          <h2>Removed</h2>
+          <h2>
+            <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-minus" /></svg> Removed
+          </h2>
           <p id="kpi-removed-callsigns">-</p>
         </article>
         <article class="kpi-card kpi-card--upgrade">
-          <h2>Qual upgraded</h2>
+          <h2>
+            <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-arrow-up" /></svg> Qual upgraded
+          </h2>
           <p id="kpi-upgrades">-</p>
         </article>
       </section>
 
       <section class="chart-grid">
         <article class="panel panel--province-bar">
-          <h2>Top Provinces by Record Count</h2>
+          <h2>
+            <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chart-col" /></svg> Top Provinces by
+            Record Count
+          </h2>
           <div class="province-chart-wrap">
             <canvas id="province-chart"></canvas>
           </div>
         </article>
         <article class="panel">
-          <h2>Qualification Mix</h2>
+          <h2>
+            <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chart-pie" /></svg> Qualification Mix
+          </h2>
           <canvas id="qual-chart" height="180"></canvas>
           <div class="qual-legend" id="qual-legend"></div>
         </article>
         <article class="panel panel--full">
-          <h2>Basic/Honours vs Advanced</h2>
+          <h2>
+            <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-scale" /></svg> Basic/Honours vs
+            Advanced
+          </h2>
           <div class="chart-doughnut-wrap">
             <canvas id="level-chart"></canvas>
           </div>
@@ -76,7 +216,10 @@
 
       <section class="panel panel--trend">
         <h2 class="trend-title">
-          <span class="trend-title__text">Licensee Count Over Time</span>
+          <span class="trend-title__text">
+            <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chart-line" /></svg> Licensee Count
+            Over Time
+          </span>
           <span class="trend-header-controls">
             <label for="trend-range" class="trend-range-label">Range</label>
             <select id="trend-range" aria-label="Time range for the trend">
@@ -94,7 +237,10 @@
       </section>
 
       <section class="panel">
-        <h2>Recent Changes <span class="subtitle-inline" id="changes-date-range"></span></h2>
+        <h2>
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-history" /></svg> Recent Changes
+          <span class="subtitle-inline" id="changes-date-range"></span>
+        </h2>
         <div class="tab-bar" id="changes-tabs">
           <button class="tab-btn tab-btn--active" data-tab="new">New</button>
           <button class="tab-btn" data-tab="removed">Removed</button>
@@ -121,7 +267,9 @@
       </section>
 
       <section class="panel">
-        <h2>Data Quality</h2>
+        <h2>
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-shield" /></svg> Data Quality
+        </h2>
         <div class="table-wrap">
           <table>
             <thead>
@@ -137,7 +285,10 @@
       </section>
 
       <section class="panel">
-        <h2>Qualification by province</h2>
+        <h2>
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-table" /></svg> Qualification by
+          province
+        </h2>
         <p class="subtitle-inline panel-lead">
           Per-province counts for each qualification letter (A–E). Percentages are within the province.
         </p>
@@ -165,7 +316,10 @@
       </section>
 
       <section class="panel">
-        <h2>Top Cities (from summary)</h2>
+        <h2>
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-building" /></svg> Top Cities (from
+          summary)
+        </h2>
         <div class="controls">
           <label for="city-filter">Filter city/province:</label>
           <input id="city-filter" type="text" placeholder="e.g. HALIFAX or NS" />
@@ -198,7 +352,9 @@
       </section>
 
       <section class="panel">
-        <h2>Top Clubs</h2>
+        <h2>
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-users" /></svg> Top Clubs
+        </h2>
         <div class="controls">
           <label for="clubs-page-size">Rows:</label>
           <select id="clubs-page-size">
@@ -228,7 +384,10 @@
       </section>
 
       <section class="panel">
-        <h2>Clubs &amp; postal coverage</h2>
+        <h2>
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-mail" /></svg> Clubs &amp; postal
+          coverage
+        </h2>
         <p class="subtitle-inline panel-lead">
           Aggregates from club name and postal-code fields in the source data.
         </p>

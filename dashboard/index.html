@@ -74,10 +74,10 @@
         </article>
       </section>
 
-      <section class="panel">
-        <div class="trend-panel-head">
-          <h2>Licensee Count Over Time</h2>
-          <div class="trend-range-wrap controls">
+      <section class="panel panel--trend">
+        <h2 class="trend-title">
+          <span class="trend-title__text">Licensee Count Over Time</span>
+          <span class="trend-header-controls">
             <label for="trend-range" class="trend-range-label">Range</label>
             <select id="trend-range" aria-label="Time range for the trend">
               <option value="7">Last 7 days</option>
@@ -86,9 +86,11 @@
               <option value="1y">Last year</option>
               <option value="all">All</option>
             </select>
-          </div>
+          </span>
+        </h2>
+        <div class="trend-chart-wrap">
+          <canvas id="trend-chart"></canvas>
         </div>
-        <canvas id="trend-chart" height="100"></canvas>
       </section>
 
       <section class="panel">

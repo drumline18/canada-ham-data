@@ -644,7 +644,11 @@ function _drawTrendChart(displayPoints) {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
+      maintainAspectRatio: false,
+      layout: {
+        /* Match other dashboard charts (e.g. province bar); keep plot close to the title */
+        padding: { top: 6, right: 4, left: 0, bottom: 2 },
+      },
       interaction: { mode: "index", intersect: false },
       plugins: {
         legend: { display: false },
@@ -664,14 +668,21 @@ function _drawTrendChart(displayPoints) {
             minRotation: 0,
             autoSkip: true,
             maxTicksLimit: 12,
-            font: { size: 10 },
+            font: { size: 12, family: "Inter, Segoe UI, Roboto, Arial, sans-serif", weight: 500 },
+            padding: 2,
           },
         },
         y: {
           beginAtZero: false,
           grid: { color: gridColor },
           border: { display: false },
-          ticks: { color: tickColor, callback: (v) => fmt(v) },
+          ticks: {
+            color: tickColor,
+            maxTicksLimit: 8,
+            font: { size: 12, family: "Inter, Segoe UI, Roboto, Arial, sans-serif", weight: 500 },
+            padding: 2,
+            callback: (v) => fmt(v),
+          },
         },
       },
     },

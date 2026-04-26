@@ -286,12 +286,52 @@ main > .panel + .panel {
   font-weight: 400;
 }
 
+/* Recent Changes: type tabs (left) + time range (right) on one row; stack on small screens. */
+.changes-controls-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.65rem 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.changes-controls-row .tab-bar {
+  margin-bottom: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
 .changes-toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem 0.75rem;
-  margin: 0 0 0.8rem;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.changes-controls-row .changes-toolbar {
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+/* Tablet / small screen: stack; keep time range right-aligned on its row. */
+@media (max-width: 900px) {
+  .changes-controls-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .changes-controls-row .tab-bar {
+    min-width: 0;
+  }
+
+  .changes-controls-row .changes-toolbar {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 
 .trend-range-label {

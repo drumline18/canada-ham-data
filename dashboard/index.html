@@ -241,27 +241,29 @@
           <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-history" /></svg> Recent Changes
           <span class="subtitle-inline" id="changes-date-range"></span>
         </h2>
-        <div
-          class="changes-toolbar"
-          role="group"
-          aria-label="Time range for the recent changes list"
-        >
-          <label for="changes-range" class="trend-range-label">Time range</label>
-          <select
-            id="changes-range"
-            aria-label="Filter changes by time window"
-            title="Rows from the same import run often share one detected time. Wider windows matter after multiple daily runs."
+        <div class="changes-controls-row">
+          <div class="tab-bar" id="changes-tabs">
+            <button class="tab-btn tab-btn--active" data-tab="new" type="button">New</button>
+            <button class="tab-btn" data-tab="removed" type="button">Removed</button>
+            <button class="tab-btn" data-tab="qual_upgrade" type="button">Upgrades</button>
+            <button class="tab-btn" data-tab="qual_downgrade" type="button">Downgrades</button>
+          </div>
+          <div
+            class="changes-toolbar"
+            role="group"
+            aria-label="Time range for the recent changes list"
           >
-            <option value="1">Last 1 day</option>
-            <option value="7">Last 7 days</option>
-            <option value="30" selected>Last 30 days</option>
-          </select>
-        </div>
-        <div class="tab-bar" id="changes-tabs">
-          <button class="tab-btn tab-btn--active" data-tab="new">New</button>
-          <button class="tab-btn" data-tab="removed">Removed</button>
-          <button class="tab-btn" data-tab="qual_upgrade">Upgrades</button>
-          <button class="tab-btn" data-tab="qual_downgrade">Downgrades</button>
+            <label for="changes-range" class="trend-range-label">Time range</label>
+            <select
+              id="changes-range"
+              aria-label="Filter changes by time window"
+              title="Rows from the same import run often share one detected time. Wider windows matter after multiple daily runs."
+            >
+              <option value="1">Last 1 day</option>
+              <option value="7">Last 7 days</option>
+              <option value="30" selected>Last 30 days</option>
+            </select>
+          </div>
         </div>
         <div class="table-wrap">
           <table>

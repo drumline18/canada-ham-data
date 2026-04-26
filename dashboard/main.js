@@ -3,6 +3,7 @@ const TODAY_UTC = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString().slice(
 const cityState = { page: 1, pageSize: 25, filterText: "", rows: [] };
 const clubsState = { page: 1, pageSize: 25, rows: [] };
 const changesState = { page: 1, pageSize: 25, activeTab: "new", data: {} };
+const trendState = { chart: null, fullSeries: [] };
 const STATUS_POLL_MS = 5000;
 const QUAL_LABELS = {
   A: "Basic",
@@ -500,41 +501,210 @@ function renderClubTable() {
   document.querySelector("#clubs-next").disabled = clubsState.page >= totalPages;
 }
 
-function renderTrendChart(history) {
-  if (!history || history.length === 0) return;
-  const deduped = Object.values(
-    history.reduce((acc, r) => {
-      const date = r.taken_at.slice(0, 10);
-      if (!acc[date] || r.taken_at > acc[date].taken_at) acc[date] = r;
-      return acc;
-    }, {}),
-  );
+function _dedupeHistorySorted(history) {
+  const byDate = history.reduce((acc, r) => {
+    if (!r || !r.taken_at) return acc;
+    const date = r.taken_at.slice(0, 10);
+    if (!date) return acc;
+    if (!acc[date] || r.taken_at > acc[date].taken_at) {
+      acc[date] = { taken_at: r.taken_at, row_count: r.row_count, date };
+    }
+    return acc;
+  }, {});
+  return Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function _addDays(yyyyMmDd, delta) {
+  const d = new Date(yyyyMmDd + "T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() + delta);
+  return d.toISOString().slice(0, 10);
+}
+
+function _daySpanFromTo(fromStr, toStr) {
+  const a = new Date(fromStr + "T12:00:00Z");
+  const b = new Date(toStr + "T12:00:00Z");
+  return Math.round((b - a) / 86400000);
+}
+
+function _filterLastDays(full, nDays) {
+  if (full.length === 0) return [];
+  const latest = full[full.length - 1].date;
+  const cutoff = _addDays(latest, -nDays);
+  return full.filter((r) => r.date >= cutoff);
+}
+
+function _startOfIsoWeek(dateStr) {
+  const d = new Date(dateStr + "T12:00:00Z");
+  const diff = (d.getUTCDay() + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - diff);
+  return d.toISOString().slice(0, 10);
+}
+
+function _aggregateWeekly(points) {
+  if (points.length === 0) return [];
+  const byWeek = new Map();
+  for (const p of points) {
+    const wk = _startOfIsoWeek(p.date);
+    const cur = byWeek.get(wk);
+    if (!cur || p.taken_at > cur.taken_at) {
+      byWeek.set(wk, p);
+    }
+  }
+  return Array.from(byWeek.values()).sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function _aggregateMonthly(points) {
+  if (points.length === 0) return [];
+  const byMonth = new Map();
+  for (const p of points) {
+    const m = p.date.slice(0, 7);
+    const cur = byMonth.get(m);
+    if (!cur || p.taken_at > cur.taken_at) {
+      byMonth.set(m, p);
+    }
+  }
+  return Array.from(byMonth.values()).sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * Picks daily points (optionally after weekly/monthly rollups) for the selected range.
+ */
+function _trendDisplaySeries(full, rangeKey) {
+  if (full.length === 0) return { points: [], mode: "daily" };
+  if (rangeKey === "7") return { points: _filterLastDays(full, 7), mode: "daily" };
+  if (rangeKey === "30") return { points: _filterLastDays(full, 30), mode: "daily" };
+  if (rangeKey === "90") return { points: _filterLastDays(full, 90), mode: "daily" };
+  if (rangeKey === "1y") {
+    const sliced = _filterLastDays(full, 365);
+    if (sliced.length > 80) {
+      return { points: _aggregateWeekly(sliced), mode: "weekly" };
+    }
+    return { points: sliced, mode: "daily" };
+  }
+  if (rangeKey === "all") {
+    const span = _daySpanFromTo(full[0].date, full[full.length - 1].date);
+    if (full.length > 150 || span > 550) {
+      return { points: _aggregateMonthly(full), mode: "monthly" };
+    }
+    if (full.length > 60) {
+      return { points: _aggregateWeekly(full), mode: "weekly" };
+    }
+    return { points: full, mode: "daily" };
+  }
+  return { points: _filterLastDays(full, 90), mode: "daily" };
+}
+
+function _destroyTrendChart() {
+  if (trendState.chart) {
+    trendState.chart.destroy();
+    trendState.chart = null;
+    return;
+  }
   const ctx = document.querySelector("#trend-chart");
-  new Chart(ctx, {
+  if (ctx && typeof Chart !== "undefined" && typeof Chart.getChart === "function") {
+    const orphan = Chart.getChart(ctx);
+    if (orphan) {
+      orphan.destroy();
+    }
+  }
+}
+
+function _drawTrendChart(displayPoints) {
+  const ctx = document.querySelector("#trend-chart");
+  if (!ctx) return;
+  const n = displayPoints.length;
+  if (n === 0) {
+    _destroyTrendChart();
+    return;
+  }
+
+  const tickColor = "#9fb1d0";
+  const gridColor = "rgba(159, 177, 208, 0.12)";
+  const pointR = n <= 24 ? 4 : n <= 72 ? 2 : 0;
+  const useFill = n <= 200;
+
+  _destroyTrendChart();
+
+  trendState.chart = new Chart(ctx, {
     type: "line",
     data: {
-      labels: deduped.map((r) => r.taken_at.slice(0, 10)),
+      labels: displayPoints.map((r) => r.date),
       datasets: [
         {
           label: "Total Licensees",
-          data: deduped.map((r) => r.row_count),
-          tension: 0.3,
-          fill: true,
-          pointRadius: deduped.length < 30 ? 4 : 2,
+          data: displayPoints.map((r) => r.row_count),
+          borderColor: "rgba(99, 164, 255, 0.9)",
+          backgroundColor: useFill ? "rgba(99, 164, 255, 0.18)" : "transparent",
+          tension: 0.32,
+          fill: useFill,
+          pointRadius: pointR,
+          pointHoverRadius: pointR ? pointR + 1 : 4,
         },
       ],
     },
     options: {
       responsive: true,
-      plugins: { legend: { display: false } },
+      maintainAspectRatio: true,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (c) => `Total Licensees: ${fmt(num(c.parsed.y))}`,
+          },
+        },
+      },
       scales: {
+        x: {
+          grid: { color: gridColor },
+          border: { display: false },
+          ticks: {
+            color: tickColor,
+            maxRotation: 50,
+            minRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: 12,
+            font: { size: 10 },
+          },
+        },
         y: {
           beginAtZero: false,
-          ticks: { callback: (v) => fmt(v) },
+          grid: { color: gridColor },
+          border: { display: false },
+          ticks: { color: tickColor, callback: (v) => fmt(v) },
         },
       },
     },
   });
+}
+
+/**
+ * Deduplicate by day, then wire range + aggregation for the licensee trend chart.
+ */
+function initTrendChartPanel(history) {
+  const full = _dedupeHistorySorted(Array.isArray(history) ? history : []);
+  trendState.fullSeries = full;
+  if (full.length === 0) {
+    _destroyTrendChart();
+    return;
+  }
+
+  const select = document.querySelector("#trend-range");
+  if (!select) {
+    return;
+  }
+
+  const run = () => {
+    const rangeKey = select.value;
+    let { points } = _trendDisplaySeries(full, rangeKey);
+    if (points.length === 0) {
+      points = full;
+    }
+    _drawTrendChart(points);
+  };
+
+  select.addEventListener("change", run);
+  run();
 }
 
 function renderChangesTable() {
@@ -669,7 +839,7 @@ async function boot() {
 
     fillKpis(provinceRows, qualRows, status.row_count);
     fillChangeKpis(recentChanges);
-    renderTrendChart(snapshotHistory);
+    initTrendChartPanel(snapshotHistory);
     renderProvinceChart(provinceRows);
     renderQualChart(qualRows);
     renderLevelSplitChart(qualRows);

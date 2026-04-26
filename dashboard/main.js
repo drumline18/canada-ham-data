@@ -22,15 +22,26 @@ const QUAL_LABELS = {
   E: "Basic with Honours",
 };
 
+/** Chart palette aligned with dashboard glass / cyan–magenta accents. */
+const CHART_UI = {
+  tickColor: "rgba(200, 215, 255, 0.78)",
+  gridColor: "rgba(255, 255, 255, 0.07)",
+  fontFamily: "'Outfit', system-ui, sans-serif",
+  accentLine: "rgba(46, 230, 255, 0.95)",
+  accentFill: "rgba(46, 230, 255, 0.14)",
+  barFill: "rgba(46, 230, 255, 0.58)",
+  barBorder: "rgba(255, 255, 255, 0.22)",
+};
+
 /** Colours for the qualification doughnut and custom legend (cycles if needed). */
 const QUAL_MIX_COLORS = [
-  "#5BC0EB",
-  "#F25F5C",
-  "#F4A261",
-  "#E9C46A",
-  "#2A9D8F",
-  "#9B5DE5",
-  "#94A3B8",
+  "#2ee6ff",
+  "#ff6b9d",
+  "#ff9f43",
+  "#ffd166",
+  "#06d6a0",
+  "#c084fc",
+  "#94a3b8",
 ];
 
 function qualLetterKeyHtml() {
@@ -218,8 +229,7 @@ function fillChangeKpis(changes) {
 function renderProvinceChart(rows) {
   const top = rows.slice(0, 10);
   const ctx = document.querySelector("#province-chart");
-  const tickColor = "#9fb1d0";
-  const gridColor = "rgba(159, 177, 208, 0.12)";
+  const { tickColor, gridColor, barFill, barBorder, fontFamily } = CHART_UI;
 
   new Chart(ctx, {
     type: "bar",
@@ -229,10 +239,10 @@ function renderProvinceChart(rows) {
         {
           label: "Records",
           data: top.map((r) => num(r.records)),
-          backgroundColor: "rgba(99, 164, 255, 0.72)",
-          borderColor: "rgba(255, 255, 255, 0.35)",
+          backgroundColor: barFill,
+          borderColor: barBorder,
           borderWidth: 1,
-          borderRadius: 4,
+          borderRadius: 8,
           barPercentage: 0.72,
           categoryPercentage: 0.82,
         },
@@ -260,7 +270,7 @@ function renderProvinceChart(rows) {
             maxRotation: 0,
             minRotation: 0,
             autoSkip: false,
-            font: { size: 11 },
+            font: { size: 11, family: fontFamily },
           },
           border: { display: false },
         },
@@ -271,7 +281,7 @@ function renderProvinceChart(rows) {
           ticks: {
             color: tickColor,
             maxTicksLimit: 7,
-            font: { size: 11 },
+            font: { size: 11, family: fontFamily },
             callback: (v) => fmt(v),
           },
         },
@@ -319,9 +329,9 @@ function renderQualChart(rows) {
           data: values,
           backgroundColor: colors,
           // Match Chart.js default doughnut styling (same visual as Basic/Honours chart)
-          borderColor: "rgba(255, 255, 255, 0.92)",
+          borderColor: "rgba(255, 255, 255, 0.32)",
           borderWidth: 2,
-          hoverBorderColor: "#ffffff",
+          hoverBorderColor: "rgba(46, 230, 255, 0.85)",
         },
       ],
     },
@@ -366,12 +376,16 @@ function renderLevelSplitChart(rows) {
       datasets: [
         {
           data: [basicHonours, advancedAndOther],
-          backgroundColor: ["#5BC0EB", "#F25F5C"],
+          backgroundColor: ["#2ee6ff", "#ff6b9d"],
+          borderColor: "rgba(255, 255, 255, 0.28)",
+          borderWidth: 2,
+          hoverBorderColor: "rgba(255, 255, 255, 0.55)",
         },
       ],
     },
     options: {
       responsive: true,
+      cutout: "52%",
       plugins: {
         tooltip: {
           callbacks: {
@@ -627,8 +641,7 @@ function _drawTrendChart(displayPoints) {
     return;
   }
 
-  const tickColor = "#9fb1d0";
-  const gridColor = "rgba(159, 177, 208, 0.12)";
+  const { tickColor, gridColor, fontFamily, accentLine, accentFill } = CHART_UI;
   const pointR = n <= 24 ? 4 : n <= 72 ? 2 : 0;
   const useFill = n <= 200;
 
@@ -642,8 +655,8 @@ function _drawTrendChart(displayPoints) {
         {
           label: "Total Licensees",
           data: displayPoints.map((r) => r.row_count),
-          borderColor: "rgba(99, 164, 255, 0.9)",
-          backgroundColor: useFill ? "rgba(99, 164, 255, 0.18)" : "transparent",
+          borderColor: accentLine,
+          backgroundColor: useFill ? accentFill : "transparent",
           tension: 0.32,
           fill: useFill,
           pointRadius: pointR,
@@ -677,7 +690,7 @@ function _drawTrendChart(displayPoints) {
             minRotation: 0,
             autoSkip: true,
             maxTicksLimit: 12,
-            font: { size: 12, family: "Inter, Segoe UI, Roboto, Arial, sans-serif", weight: 500 },
+            font: { size: 12, family: fontFamily, weight: 500 },
             padding: 2,
           },
         },
@@ -688,7 +701,7 @@ function _drawTrendChart(displayPoints) {
           ticks: {
             color: tickColor,
             maxTicksLimit: 8,
-            font: { size: 12, family: "Inter, Segoe UI, Roboto, Arial, sans-serif", weight: 500 },
+            font: { size: 12, family: fontFamily, weight: 500 },
             padding: 2,
             callback: (v) => fmt(v),
           },

@@ -61,6 +61,15 @@ main {
   margin-top: 0;
 }
 
+.kpi-changes-eyebrow {
+  grid-column: 1 / -1;
+  margin: 0 0 0.1rem;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--muted);
+}
+
 @media (max-width: 900px) {
   .kpi-grid--main {
     grid-template-columns: repeat(2, 1fr);

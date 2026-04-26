@@ -2,7 +2,16 @@ const DATA_DIR = "/output";
 const TODAY_UTC = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
 const cityState = { page: 1, pageSize: 25, filterText: "", rows: [] };
 const clubsState = { page: 1, pageSize: 25, rows: [] };
-const changesState = { page: 1, pageSize: 25, activeTab: "new", data: {} };
+const changesState = {
+  page: 1,
+  pageSize: 25,
+  activeTab: "new",
+  data: {},
+  /** Full payload from `recent_changes.json` (all rows within the server window, typically 30d). */
+  raw: null,
+  filterDays: 30,
+};
+let changesRangeDelegateRegistered = false;
 const trendState = { chart: null, fullSeries: [] };
 const STATUS_POLL_MS = 5000;
 const QUAL_LABELS = {
@@ -765,11 +774,76 @@ function renderChangesTable() {
   document.querySelector("#changes-next").disabled = changesState.page >= totalPages;
 }
 
-function initChangesPanel(changes) {
-  changesState.data = changes;
+function _cloneChangesForFilter(ch) {
+  return {
+    new: (ch.new || []).map((r) => ({ ...r })),
+    removed: (ch.removed || []).map((r) => ({ ...r })),
+    qual_upgrade: (ch.qual_upgrade || []).map((r) => ({ ...r })),
+    qual_downgrade: (ch.qual_downgrade || []).map((r) => ({ ...r })),
+  };
+}
 
-  const days = changes.days || 30;
-  document.querySelector("#changes-date-range").textContent = `— last ${days} days`;
+/** Parse ISED/ISO timestamps; tolerate space instead of T (some SQLite / JSON paths). */
+function _parseDetectedAt(s) {
+  if (!s || typeof s !== "string") {
+    return NaN;
+  }
+  const t = Date.parse(s);
+  if (Number.isFinite(t)) {
+    return t;
+  }
+  if (s.length > 10 && s[10] === " ") {
+    return Date.parse(s.slice(0, 10) + "T" + s.slice(11));
+  }
+  return NaN;
+}
+
+/**
+ * Client-side rolling N-day window in local browser time. Server JSON is capped (e.g. 30d).
+ * Rows with missing/invalid `detected_at` are dropped from the filtered table.
+ * Note: a single import run often assigns the same `detected_at` to all rows, so 1d/7d/30d
+ * can look identical until the log spans more than one import with different times.
+ */
+function _rowsWithinLastDays(rows, nDays) {
+  const days = Math.max(1, Math.min(30, num(nDays) || 30));
+  const ms = days * 24 * 60 * 60 * 1000;
+  const cutoff = Date.now() - ms;
+  return (rows || []).filter((r) => {
+    const t = _parseDetectedAt(r.detected_at);
+    return Number.isFinite(t) && t >= cutoff;
+  });
+}
+
+function _updateChangesDateSubtitle() {
+  const d = changesState.filterDays;
+  const el = document.querySelector("#changes-date-range");
+  if (el) {
+    el.textContent = d === 1 ? "— last 1 day" : `— last ${d} days`;
+  }
+}
+
+function _applyChangesTimeFilter() {
+  const raw = changesState.raw;
+  if (!raw) {
+    return;
+  }
+  const d = changesState.filterDays;
+  changesState.data = {
+    new: _rowsWithinLastDays(raw.new, d),
+    removed: _rowsWithinLastDays(raw.removed, d),
+    qual_upgrade: _rowsWithinLastDays(raw.qual_upgrade, d),
+    qual_downgrade: _rowsWithinLastDays(raw.qual_downgrade, d),
+  };
+  changesState.page = 1;
+  _updateChangesDateSubtitle();
+  renderChangesTable();
+}
+
+function initChangesPanel(changes) {
+  changesState.raw = _cloneChangesForFilter(changes);
+  const rangeSel = document.querySelector("#changes-range");
+  const v = rangeSel ? num(rangeSel.value) : 30;
+  changesState.filterDays = [1, 7, 30].indexOf(v) >= 0 ? v : 30;
 
   document.querySelectorAll(".tab-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -782,7 +856,9 @@ function initChangesPanel(changes) {
   });
 
   document.querySelector("#changes-prev").addEventListener("click", () => {
-    if (changesState.page > 1) changesState.page -= 1;
+    if (changesState.page > 1) {
+      changesState.page -= 1;
+    }
     renderChangesTable();
   });
   document.querySelector("#changes-next").addEventListener("click", () => {
@@ -790,7 +866,7 @@ function initChangesPanel(changes) {
     renderChangesTable();
   });
 
-  renderChangesTable();
+  _applyChangesTimeFilter();
 }
 
 function showError(message) {
@@ -855,6 +931,22 @@ async function boot() {
     renderQualChart(qualRows);
     renderLevelSplitChart(qualRows);
     initChangesPanel(recentChanges);
+    if (!changesRangeDelegateRegistered) {
+      changesRangeDelegateRegistered = true;
+      /* Delegated handler: more reliable than per-select init if the panel order or
+         cached scripts ever skip the old direct listener. */
+      document.addEventListener("change", (e) => {
+        if (!e.target || e.target.id !== "changes-range") {
+          return;
+        }
+        const v = num(e.target.value);
+        const allowed = [1, 7, 30];
+        changesState.filterDays = allowed.indexOf(v) >= 0 ? v : 30;
+        if (changesState.raw) {
+          _applyChangesTimeFilter();
+        }
+      });
+    }
     renderQualityTable(qualityRows);
     renderQualByProvinceTable(qualByProvRows);
     cityState.rows = cityRows;

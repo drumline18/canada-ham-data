@@ -286,6 +286,14 @@ main > .panel + .panel {
   font-weight: 400;
 }
 
+.changes-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0 0 0.8rem;
+}
+
 .trend-range-label {
   color: var(--muted);
   font-size: 0.85rem;

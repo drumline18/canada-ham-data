@@ -7,6 +7,11 @@ Serves:
   /output/<file> → output CSV files
   /status        → JSON with last_updated info
 
+Optional manual calls (all use ?token=TRIGGER_TOKEN if TRIGGER_TOKEN is set in env):
+  /trigger         → full ISED download + diff + output files
+  /rebuild-output  → refresh CSV/JSON from SQLite only (no download; good for quick tests)
+  /cloudflare-purge → purge Cloudflare edge cache (needs CLOUDFLARE_ZONE_ID + CLOUDFLARE_API_TOKEN)
+
 APScheduler runs run_analysis.download_and_analyze() daily at 03:00 UTC.
 On startup the analysis runs automatically if the output is missing or older
 than 25 hours.
@@ -21,6 +26,7 @@ import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
+import requests
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, abort, jsonify, request, send_from_directory
 
@@ -83,12 +89,20 @@ def output_file(filename: str):
     return response
 
 
+def _check_trigger_token() -> bool:
+    if not TRIGGER_TOKEN:
+        return False
+    if request.args.get("token") != TRIGGER_TOKEN:
+        return False
+    return True
+
+
 @app.route("/trigger")
 def trigger():
-    """Manually kick off an analysis run. Requires ?token=<TRIGGER_TOKEN>."""
+    """Manually kick off a full download + diff + output write. Requires ?token=<TRIGGER_TOKEN>."""
     if not TRIGGER_TOKEN:
         abort(403, description="TRIGGER_TOKEN env var not set — endpoint disabled.")
-    if request.args.get("token") != TRIGGER_TOKEN:
+    if not _check_trigger_token():
         abort(403, description="Invalid token.")
     state = _get_analysis_state()
     if state["running"]:
@@ -97,6 +111,68 @@ def trigger():
     thread.start()
     log.info("Manual trigger: analysis started.")
     return jsonify({"queued": True})
+
+
+@app.route("/rebuild-output")
+def rebuild_output():
+    """
+    Regenerate dashboard CSV/JSON from the local SQLite DB (no ISED download).
+    For testing KPI/output logic or refreshing files after a deploy. Same token as /trigger.
+    """
+    if not TRIGGER_TOKEN:
+        abort(403, description="TRIGGER_TOKEN env var not set — endpoint disabled.")
+    if not _check_trigger_token():
+        abort(403, description="Invalid token.")
+    if not DB_PATH.exists():
+        abort(503, description="No database at DB_PATH — run analysis at least once.")
+    if not _analysis_lock.acquire(blocking=False):
+        return jsonify({"ok": False, "reason": "Analysis in progress; try again shortly."}), 409
+    try:
+        _sync_outputs_from_db()
+    finally:
+        _analysis_lock.release()
+    log.info("Manual rebuild-output: JSON/CSVs refreshed from DB.")
+    return jsonify({"ok": True, "rebuilt": True})
+
+
+@app.route("/cloudflare-purge")
+def cloudflare_purge():
+    """
+    Optional: purge Cloudflare edge cache for the whole zone. Does not re-run analysis.
+    Set CLOUDFLARE_ZONE_ID and CLOUDFLARE_API_TOKEN (Cache Purge: Edit). Same ?token= as /trigger.
+    """
+    if not TRIGGER_TOKEN:
+        abort(403, description="TRIGGER_TOKEN env var not set — endpoint disabled.")
+    if not _check_trigger_token():
+        abort(403, description="Invalid token.")
+    zone_id = os.environ.get("CLOUDFLARE_ZONE_ID", "").strip()
+    api_token = os.environ.get("CLOUDFLARE_API_TOKEN", "").strip()
+    if not zone_id or not api_token:
+        return jsonify(
+            {
+                "ok": False,
+                "error": "Set CLOUDFLARE_ZONE_ID and CLOUDFLARE_API_TOKEN in the app environment, "
+                "or purge the cache in the Cloudflare dashboard (Caching → Purge).",
+            }
+        ), 400
+    try:
+        r = requests.post(
+            f"https://api.cloudflare.com/client/v4/zones/{zone_id}/purge_cache",
+            headers={"Authorization": f"Bearer {api_token}", "Content-Type": "application/json"},
+            json={"purge_everything": True},
+            timeout=30,
+        )
+    except OSError as exc:
+        log.warning("cloudflare-purge: request failed: %s", exc)
+        return jsonify({"ok": False, "error": str(exc)}), 502
+    if not r.ok:
+        log.warning("cloudflare-purge: HTTP %s: %s", r.status_code, r.text[:500])
+        return jsonify({"ok": False, "error": r.text, "http_status": r.status_code}), 502
+    body = r.json() if r.content else {}
+    if not body.get("success", True):
+        return jsonify({"ok": False, "error": body}), 502
+    log.info("Manual cloudflare-purge: edge cache purged (purge_everything).")
+    return jsonify({"ok": True, "purged": True, "result": body.get("result")})
 
 
 @app.route("/status")

@@ -72,6 +72,9 @@ Open the service → **Variables** → **New variable**.
 | `OUTPUT_DIR` | `/data/output` | **Yes** — must point inside the volume. |
 | `DB_PATH` | *(omit)* | Optional. If omitted, the app uses **`$OUTPUT_DIR/ham.db`** (e.g. `/data/output/ham.db`). Set explicitly only if you want the DB elsewhere, e.g. `/data/ham.db`. |
 | `DATA_URL` | `https://apc-cap.ic.gc.ca/datafiles/amateur_delim.zip` | Optional (same default in code). |
+| `TRIGGER_TOKEN` | *(omit)* | Optional. If set, enables manual `GET` endpoints below. Use a long random string; never commit it. |
+| `CLOUDFLARE_ZONE_ID` | *(omit)* | Optional. With `CLOUDFLARE_API_TOKEN`, enables `GET /cloudflare-purge` to purge the zone’s edge cache. |
+| `CLOUDFLARE_API_TOKEN` | *(omit)* | API token with **Cache Purge** permission for the zone. |
 
 Do **not** set `PORT` — Railway injects it; `server.py` already binds `0.0.0.0` and reads `PORT`.
 
@@ -87,6 +90,37 @@ After saving variables, trigger a **Redeploy** so the service picks them up.
 ### Step 6 — Daily updates
 
 `server.py` schedules **`run_analysis.download_and_analyze`** every day at **03:00 UTC**. No extra Railway cron is required.
+
+### Optional — manual HTTP triggers
+
+Set **`TRIGGER_TOKEN`** in the service environment, redeploy, then call these URLs in a **browser address bar** or with **`curl`**. They are all **`GET`** requests and require **`?token=<the same value as TRIGGER_TOKEN>`**. If `TRIGGER_TOKEN` is unset, the app returns 403 and the routes are disabled.
+
+| Path | What it does |
+|------|----------------|
+| `/trigger` | Full pipeline: download ISED zip → diff → update SQLite → rewrite CSV/JSON. Returns **409** if an analysis is already running. |
+| `/rebuild-output` | Reread SQLite and **regenerate** dashboard files only (no download). Handy for quick checks after a deploy. Returns **409** while a full analysis holds the lock. |
+| `/cloudflare-purge` | Ask Cloudflare to **purge the whole zone** cache (requires `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN`). Use after new data is on the origin so visitors get fresh assets with your usual one-day `?v=` cache strategy. If Cloudflare env is missing, the JSON error suggests purging in the Cloudflare UI instead. |
+
+**Examples** (replace the host, path prefix, and token):
+
+```bash
+# Full refresh from ISED (public Railway URL)
+curl "https://YOUR-SERVICE.railway.app/trigger?token=YOUR_TRIGGER_TOKEN"
+
+# Rebuild output files from DB only
+curl "https://YOUR-SERVICE.railway.app/rebuild-output?token=YOUR_TRIGGER_TOKEN"
+
+# Clear Cloudflare edge cache (if API env vars are set on the app)
+curl "https://YOUR-SERVICE.railway.app/cloudflare-purge?token=YOUR_TRIGGER_TOKEN"
+```
+
+**Local** (default port 8080):
+
+```bash
+curl "http://localhost:8080/trigger?token=YOUR_TRIGGER_TOKEN"
+```
+
+You can also paste the same URL (with your real token) into a browser; you should get a small JSON body such as `{"queued": true}` for `/trigger` on success.
 
 ### Troubleshooting
 
@@ -154,3 +188,6 @@ python analyze_amateur.py --input amateur_delim.txt --output-dir output
 | `DB_PATH` | `<OUTPUT_DIR>/ham.db` | SQLite database path |
 | `DATA_URL` | ISED ZIP URL | Source data URL |
 | `PORT` | `8080` | HTTP port (Railway sets this automatically) |
+| `TRIGGER_TOKEN` | *(empty)* | If set, enables `GET` `/trigger`, `/rebuild-output`, and `/cloudflare-purge` with `?token=...` (see *Optional — manual HTTP triggers* under Railway). |
+| `CLOUDFLARE_ZONE_ID` | *(empty)* | Cloudflare **Zone ID** (dashboard → site → API section). Used only by `/cloudflare-purge`. |
+| `CLOUDFLARE_API_TOKEN` | *(empty)* | API token with cache purge for that zone. Used only by `/cloudflare-purge`. |

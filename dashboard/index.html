@@ -160,30 +160,34 @@
         </article>
       </section>
       <section
-        class="kpi-grid kpi-grid--changes"
+        class="kpi-changes-block"
         aria-label="Today's changes from the latest ISED data import: new, removed, and qualification upgrades"
       >
-        <p class="kpi-changes-eyebrow">
-          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-calendar" /></svg> Today's changes
-        </p>
-        <article class="kpi-card kpi-card--new">
-          <h2>
-            <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-plus" /></svg> New
-          </h2>
-          <p id="kpi-new-callsigns">-</p>
-        </article>
-        <article class="kpi-card kpi-card--removed">
-          <h2>
-            <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-minus" /></svg> Removed
-          </h2>
-          <p id="kpi-removed-callsigns">-</p>
-        </article>
-        <article class="kpi-card kpi-card--upgrade">
-          <h2>
-            <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-arrow-up" /></svg> Qual upgraded
-          </h2>
-          <p id="kpi-upgrades">-</p>
-        </article>
+        <div class="kpi-changes-panel">
+          <p class="kpi-changes-eyebrow">
+            <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-calendar" /></svg> Today's changes
+          </p>
+          <div class="kpi-changes-cards">
+            <article class="kpi-card kpi-card--new">
+              <h2>
+                <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-plus" /></svg> New
+              </h2>
+              <p id="kpi-new-callsigns">-</p>
+            </article>
+            <article class="kpi-card kpi-card--removed">
+              <h2>
+                <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-minus" /></svg> Removed
+              </h2>
+              <p id="kpi-removed-callsigns">-</p>
+            </article>
+            <article class="kpi-card kpi-card--upgrade">
+              <h2>
+                <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-arrow-up" /></svg> Qual upgraded
+              </h2>
+              <p id="kpi-upgrades">-</p>
+            </article>
+          </div>
+        </div>
       </section>
 
       <section class="chart-grid">

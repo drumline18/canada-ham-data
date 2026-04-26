@@ -114,21 +114,35 @@ main {
   grid-template-columns: repeat(4, 1fr);
 }
 
-/* Three equal columns: auto-fit + minmax() created extra empty tracks, so the cards
-   bunched in the first columns (~half the row). */
-.kpi-grid--changes {
+/* Today’s changes: one framed section (label + stat cards) */
+.kpi-changes-block {
+  margin: 1rem 0;
+}
+
+.kpi-changes-panel {
+  background: linear-gradient(160deg, rgba(23, 35, 62, 0.95) 0%, rgba(15, 26, 48, 0.98) 100%);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.9rem 0.95rem 1rem;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.22);
+}
+
+/* Three equal columns: avoid auto-fit so cards span full width of the block */
+.kpi-changes-cards {
+  display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 0;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
 }
 
 .kpi-changes-eyebrow {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.4rem;
-  grid-column: 1 / -1;
-  margin: 0 0 0.35rem;
-  padding: 0.4rem 0.85rem 0.4rem 0.7rem;
-  width: max-content;
+  gap: 0.45rem;
+  margin: 0 0 0.7rem;
+  padding: 0 0.1rem 0.65rem;
+  width: 100%;
   max-width: 100%;
   font-size: 0.72rem;
   line-height: 1.35;
@@ -136,11 +150,7 @@ main {
   letter-spacing: 0.11em;
   text-transform: uppercase;
   color: #c8d4f0;
-  background: linear-gradient(90deg, rgba(99, 164, 255, 0.14) 0%, rgba(21, 30, 51, 0.5) 100%);
-  border: 1px solid rgba(99, 164, 255, 0.25);
-  border-left: 3px solid var(--accent);
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(37, 50, 82, 0.85);
 }
 
 .kpi-changes-eyebrow .icon {
@@ -148,10 +158,15 @@ main {
   width: 0.95em;
   height: 0.95em;
   vertical-align: 0;
+  flex-shrink: 0;
+}
+
+.kpi-changes-panel .kpi-card {
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
 }
 
 @media (max-width: 700px) {
-  .kpi-grid--changes {
+  .kpi-changes-cards {
     grid-template-columns: 1fr;
   }
 }

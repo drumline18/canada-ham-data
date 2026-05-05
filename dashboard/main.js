@@ -143,6 +143,56 @@ function fmt(n) {
   return new Intl.NumberFormat("en-CA").format(n);
 }
 
+function formatSharePct(part, total) {
+  const t = num(total);
+  if (t <= 0) return "0%";
+  const s = ((100 * num(part)) / t).toFixed(1).replace(/\.0$/, "");
+  return `${s}%`;
+}
+
+/** Paints share percentages on the Basic/Honours vs Advanced doughnut (always visible). */
+const LEVEL_SPLIT_PCT_PLUGIN = {
+  id: "levelSplitPctLabels",
+  afterDatasetsDraw(chart) {
+    const ds = chart.data.datasets[0];
+    const meta = chart.getDatasetMeta(0);
+    if (!meta?.data?.length || !ds) return;
+
+    const sum = ds.data.reduce((acc, v) => acc + num(v), 0);
+    if (sum <= 0) return;
+
+    const { ctx } = chart;
+    const fontFamily = CHART_UI.fontFamily;
+    ctx.save();
+    for (let i = 0; i < meta.data.length; i++) {
+      const arc = meta.data[i];
+      const value = num(ds.data[i]);
+      if (value <= 0 || !arc) continue;
+
+      const span = Math.abs(arc.endAngle - arc.startAngle);
+      if (span < 0.06) continue;
+
+      const mid = (arc.startAngle + arc.endAngle) / 2;
+      const r = (arc.outerRadius + arc.innerRadius) / 2;
+      const x = arc.x + Math.cos(mid) * r;
+      const y = arc.y + Math.sin(mid) * r;
+      const label = formatSharePct(value, sum);
+
+      ctx.font = `600 13px ${fontFamily}`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "rgba(255,255,255,0.96)";
+      ctx.shadowColor = "rgba(0,0,0,0.55)";
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetY = 1;
+      ctx.fillText(label, x, y);
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+    }
+    ctx.restore();
+  },
+};
+
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (ch) => {
     const entities = {
@@ -368,11 +418,19 @@ function renderLevelSplitChart(rows) {
     }
   }
 
+  const total = basicHonours + advancedAndOther;
+  const levelLegendNames = ["Basic / Basic with Honours", "Advanced (and advanced+other combinations)"];
+  const levelLabels = [
+    `${levelLegendNames[0]} (${formatSharePct(basicHonours, total)})`,
+    `${levelLegendNames[1]} (${formatSharePct(advancedAndOther, total)})`,
+  ];
+
   const ctx = document.querySelector("#level-chart");
+  const { tickColor, fontFamily } = CHART_UI;
   new Chart(ctx, {
     type: "doughnut",
     data: {
-      labels: ["Basic / Basic with Honours", "Advanced (and advanced+other combinations)"],
+      labels: levelLabels,
       datasets: [
         {
           data: [basicHonours, advancedAndOther],
@@ -387,13 +445,25 @@ function renderLevelSplitChart(rows) {
       responsive: true,
       cutout: "52%",
       plugins: {
+        legend: {
+          labels: {
+            color: tickColor,
+            font: { family: fontFamily, size: 11 },
+          },
+        },
         tooltip: {
           callbacks: {
-            label: (context) => `${context.label}: ${fmt(num(context.parsed))}`,
+            title: () => "",
+            label: (context) => {
+              const short = levelLegendNames[context.dataIndex] ?? "";
+              const v = num(context.parsed);
+              return `${short}: ${fmt(v)} (${formatSharePct(v, total)})`;
+            },
           },
         },
       },
     },
+    plugins: [LEVEL_SPLIT_PCT_PLUGIN],
   });
 }
 
